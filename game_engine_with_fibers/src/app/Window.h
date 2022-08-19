@@ -21,35 +21,19 @@ struct WindowMsg {
 class Window
 {
 public:
-    Window(const char* name);
-    ~Window();
-    void GetSize(uint32_t* w, uint32_t*h) const {
-        std::scoped_lock scoped(m_lock);
-        *w = m_w;
-        *h = m_h;
-    }
+    Window(HWND hwnd, int w, int h);
 
     auto GetHandle() const { return m_hwnd; };
+    void GetSize(uint32_t* w, uint32_t*h) const;
 
-    std::vector<WindowMsg> PopMsg() {
-        std::vector<WindowMsg> result;
-        {
-            std::scoped_lock scoped(m_lock);
-            m_messageStack.swap(result);
-        }
-        return result;
-    }
+    std::vector<WindowMsg> PopMsg();
 
 
-private:
-    static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    LRESULT WINAPI WndProcImpl(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+protected:
     mutable SpinLock m_lock;
     HWND m_hwnd;
-    WNDCLASSEXA m_wc;
-    uint32_t m_w = 0;
-    uint32_t m_h = 0;
+    int m_w = 0;
+    int m_h = 0;
 
     std::vector<WindowMsg> m_messageStack;
 };

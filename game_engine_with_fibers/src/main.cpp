@@ -14,6 +14,7 @@
 #include <tchar.h>
 
 #include <app/Window.h>
+#include <app/WindowManager.h>
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
@@ -74,7 +75,8 @@ int main(int, char**)
     ::RegisterClassEx(&wc);
     HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("Dear ImGui DirectX12 Example"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
 #endif
-    app::Window window("Game Engine With Fiber");
+    app::WindowManager windowManager;
+    app::Window& window = windowManager.Create("Game Engine With Fiber");
     // Initialize Direct3D
     if (!CreateDeviceD3D(window.GetHandle()))
     {
