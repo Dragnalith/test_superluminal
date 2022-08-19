@@ -5,3 +5,4 @@ game_engine_with_fibers/imgui.ini
 .vs/
 bin/
 obj/
+.vscode/

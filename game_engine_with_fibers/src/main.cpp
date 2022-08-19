@@ -6,12 +6,14 @@
 // This is because we need ImTextureID to carry a 64-bit value and by default ImTextureID is defined as void*.
 // This define is set in the example .vcxproj file and need to be replicated in your app or by adding it to your imconfig.h file.
 
-#include "imgui/imgui.h"
-#include "imgui/backends/imgui_impl_win32.h"
-#include "imgui/backends/imgui_impl_dx12.h"
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_win32.h>
+#include <imgui/backends/imgui_impl_dx12.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <tchar.h>
+
+#include <app/Window.h>
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
@@ -54,28 +56,40 @@ void CreateRenderTarget();
 void CleanupRenderTarget();
 void WaitForLastSubmittedFrame();
 FrameContext* WaitForNextFrameResources();
+
+#if 0
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
+
+// Forward declare message handler from imgui_impl_win32.cpp
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Main code
 int main(int, char**)
 {
     // Create application window
     ImGui_ImplWin32_EnableDpiAwareness();
+#if 0
     WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("ImGui Example"), NULL };
     ::RegisterClassEx(&wc);
     HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("Dear ImGui DirectX12 Example"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
-
+#endif
+    app::Window window("Game Engine With Fiber");
     // Initialize Direct3D
-    if (!CreateDeviceD3D(hwnd))
+    if (!CreateDeviceD3D(window.GetHandle()))
     {
         CleanupDeviceD3D();
+#if 0
         ::UnregisterClass(wc.lpszClassName, wc.hInstance);
+#endif
         return 1;
     }
 
+#if 0
     // Show the window
-    ::ShowWindow(hwnd, SW_SHOWDEFAULT);
-    ::UpdateWindow(hwnd);
+    ::ShowWindow(window.GetHandle(), SW_SHOWDEFAULT);
+    ::UpdateWindow(window.GetHandle());
+#endif
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -89,7 +103,7 @@ int main(int, char**)
     //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(hwnd);
+    ImGui_ImplWin32_Init(window.GetHandle());
     ImGui_ImplDX12_Init(g_pd3dDevice, NUM_FRAMES_IN_FLIGHT,
         DXGI_FORMAT_R8G8B8A8_UNORM, g_pd3dSrvDescHeap,
         g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -117,6 +131,8 @@ int main(int, char**)
 
     // Main loop
     bool done = false;
+    uint32_t w, h;
+    window.GetSize(&w, &h);
     while (!done)
     {
         // Poll and handle messages (inputs, window resize, etc.)
@@ -128,6 +144,24 @@ int main(int, char**)
             ::DispatchMessage(&msg);
             if (msg.message == WM_QUIT)
                 done = true;
+        }
+        uint32_t nextW, nextH;
+        window.GetSize(&nextW, &nextH);
+
+        // Update ImGUI
+        for (auto& msg : window.PopMsg()) {
+            ImGui_ImplWin32_WndProcHandler(msg.hWnd, msg.msg, msg.wParam, msg.lParam);
+        }
+        // Update Swapchain
+        if (g_pd3dDevice != NULL && (nextW != w || nextH != h))
+        {
+            w = nextW;
+            h = nextH;
+            WaitForLastSubmittedFrame();
+            CleanupRenderTarget();
+            HRESULT result = g_pSwapChain->ResizeBuffers(0, w, h, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
+            assert(SUCCEEDED(result) && "Failed to resize swapchain.");
+            CreateRenderTarget();
         }
         if (done)
             break;
@@ -221,8 +255,10 @@ int main(int, char**)
     ImGui::DestroyContext();
 
     CleanupDeviceD3D();
+#if 0
     ::DestroyWindow(hwnd);
     ::UnregisterClass(wc.lpszClassName, wc.hInstance);
+#endif
 
     return 0;
 }
@@ -426,40 +462,4 @@ FrameContext* WaitForNextFrameResources()
     WaitForMultipleObjects(numWaitableObjects, waitableObjects, TRUE, INFINITE);
 
     return frameCtx;
-}
-
-// Forward declare message handler from imgui_impl_win32.cpp
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-// Win32 message handler
-// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-        return true;
-
-    switch (msg)
-    {
-    case WM_SIZE:
-        if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED)
-        {
-            WaitForLastSubmittedFrame();
-            CleanupRenderTarget();
-            HRESULT result = g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
-            assert(SUCCEEDED(result) && "Failed to resize swapchain.");
-            CreateRenderTarget();
-        }
-        return 0;
-    case WM_SYSCOMMAND:
-        if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
-            return 0;
-        break;
-    case WM_DESTROY:
-        ::PostQuitMessage(0);
-        return 0;
-    }
-    return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }

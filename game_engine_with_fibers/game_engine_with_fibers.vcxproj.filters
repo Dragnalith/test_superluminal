@@ -11,6 +11,9 @@
     <Filter Include="src\imgui\backends">
       <UniqueIdentifier>{67dc1ac8-41a3-4ac8-aadd-196005e7019a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\app">
+      <UniqueIdentifier>{ae7cf5c5-2971-4d3d-8b11-739defd21ced}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -37,6 +40,21 @@
     <ClCompile Include="src\imgui\backends\imgui_impl_dx12.cpp">
       <Filter>src\imgui\backends</Filter>
     </ClCompile>
+    <ClCompile Include="src\app\DearImGuiManager.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\RenderDevice.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\Renderer.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\SwapChain.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\Window.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\imgui\imconfig.h">
@@ -62,6 +80,24 @@
     </ClInclude>
     <ClInclude Include="src\imgui\imstb_truetype.h">
       <Filter>src\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\DearImGuiManager.h">
+      <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\RenderDevice.h">
+      <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\Renderer.h">
+      <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\SpinLock.h">
+      <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\SwapChain.h">
+      <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\Window.h">
+      <Filter>src\app</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -12,8 +12,8 @@ Global
 		RelWithProfiler|x64 = RelWithProfiler|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A505624C-7258-4054-A153-EF448388A239}.Debug|x64.ActiveCfg = RelWithProfiler|x64
-		{A505624C-7258-4054-A153-EF448388A239}.Debug|x64.Build.0 = RelWithProfiler|x64
+		{A505624C-7258-4054-A153-EF448388A239}.Debug|x64.ActiveCfg = Debug|x64
+		{A505624C-7258-4054-A153-EF448388A239}.Debug|x64.Build.0 = Debug|x64
 		{A505624C-7258-4054-A153-EF448388A239}.RelNoProfiler|x64.ActiveCfg = RelNoProfiler|x64
 		{A505624C-7258-4054-A153-EF448388A239}.RelNoProfiler|x64.Build.0 = RelNoProfiler|x64
 		{A505624C-7258-4054-A153-EF448388A239}.RelWithProfiler|x64.ActiveCfg = RelWithProfiler|x64
