@@ -12,7 +12,7 @@ Window::Window(HWND hwnd, int w, int h)
 {
 };
 
-void Window::GetSize(uint32_t* w, uint32_t*h) const {
+void Window::GetSize(int* w, int*h) const {
     std::scoped_lock scoped(m_lock);
     *w = m_w;
     *h = m_h;

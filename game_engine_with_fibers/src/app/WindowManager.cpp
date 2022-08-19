@@ -65,6 +65,7 @@ struct WindowManagerImpl {
                     std::scoped_lock scope(m_lock);
                     m_w = static_cast<int>(LOWORD(lParam));
                     m_h = static_cast<int>(HIWORD(lParam));
+                    std::cout << "Size changed: " << m_w << ", " << m_h << "\n";
                 }
                 return 0;
             case WM_SYSCOMMAND:
@@ -158,7 +159,6 @@ struct WindowManagerImpl {
 
     void ThreadFunc() {
         // Create application window
-        //ImGui_ImplWin32_EnableDpiAwareness();
         ::RegisterClassExA(&wc);
 
         auto next = Clock::now() + std::chrono::milliseconds(4);
@@ -239,11 +239,9 @@ void WindowManager::Destroy(Window& window) {
 }
 
 void WindowManager::SetCursor(void* cursor) {
-    std::cout << "cursor change: " << cursor << "\n";
     std::promise<void> promise;
     m_impl->taskQueue.Push([this, cursor] {
         m_impl->cursor = static_cast<HCURSOR>(cursor);
-        std::cout << "apply cursor: " << cursor << "\n";
         return ::SetCursor(m_impl->cursor);
     });
 }

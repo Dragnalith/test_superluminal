@@ -8,9 +8,12 @@
 
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_dx12.h>
+#include <imgui/backends/imgui_impl_win32.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <tchar.h>
+
+#include <iostream>
 
 #include <app/Window.h>
 #include <app/WindowManager.h>
@@ -58,9 +61,7 @@ void CleanupRenderTarget();
 void WaitForLastSubmittedFrame();
 FrameContext* WaitForNextFrameResources();
 
-#if 0
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-#endif
+
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -68,29 +69,17 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 // Main code
 int main(int, char**)
 {
-
-#if 0
-    WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("ImGui Example"), NULL };
-    ::RegisterClassEx(&wc);
-    HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("Dear ImGui DirectX12 Example"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
-#endif
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     app::WindowManager windowManager;
     app::Window& window = windowManager.Create("Game Engine With Fiber");
     // Initialize Direct3D
     if (!CreateDeviceD3D(window.GetHandle()))
     {
         CleanupDeviceD3D();
-#if 0
-        ::UnregisterClass(wc.lpszClassName, wc.hInstance);
-#endif
+
         return 1;
     }
 
-#if 0
-    // Show the window
-    ::ShowWindow(window.GetHandle(), SW_SHOWDEFAULT);
-    ::UpdateWindow(window.GetHandle());
-#endif
 
 
 
@@ -123,7 +112,7 @@ int main(int, char**)
 
     // Main loop
     bool done = false;
-    uint32_t w, h;
+    int w, h;
     window.GetSize(&w, &h);
     auto lastQuitTime = window.GetLastQuitTime();
 
@@ -133,7 +122,7 @@ int main(int, char**)
         auto now = app::Clock::now();
         std::chrono::duration<float> deltatime = now - lastFrameTime;
         lastFrameTime = now;
-        uint32_t nextW, nextH;
+        int nextW, nextH;
         window.GetSize(&nextW, &nextH);
 
         // Update ImGUI
@@ -145,6 +134,8 @@ int main(int, char**)
         {
             w = nextW;
             h = nextH;
+            std::cout << "Swapchain updated: " << w << ", " << h << "\n";
+
             WaitForLastSubmittedFrame();
             CleanupRenderTarget();
             HRESULT result = g_pSwapChain->ResizeBuffers(0, w, h, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);

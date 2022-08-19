@@ -25,7 +25,7 @@ public:
     Window(HWND hwnd, int w, int h);
 
     auto GetHandle() const { return m_hwnd; };
-    void GetSize(uint32_t* w, uint32_t*h) const;
+    void GetSize(int* w, int*h) const;
     Clock::time_point GetLastQuitTime() const;
 
     std::vector<WindowMsg> PopMsg();
