@@ -1,5 +1,7 @@
 cpp_fiber/x64/
-tracy_fiber_fiber/x64/
+tracy_fiber_test/x64/
+game_engine_with_fibers/x64/
+game_engine_with_fibers/imgui.ini
 .vs/
 bin/
 obj/
