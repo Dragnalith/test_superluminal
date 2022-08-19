@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <app/SpinLock.h>
+#include <app/Util.h>
 
 namespace app
 {
@@ -25,6 +26,7 @@ public:
 
     auto GetHandle() const { return m_hwnd; };
     void GetSize(uint32_t* w, uint32_t*h) const;
+    Clock::time_point GetLastQuitTime() const;
 
     std::vector<WindowMsg> PopMsg();
 
@@ -34,6 +36,7 @@ protected:
     HWND m_hwnd;
     int m_w = 0;
     int m_h = 0;
+    Clock::time_point m_lastQuitTime = Clock::now();
 
     std::vector<WindowMsg> m_messageStack;
 };

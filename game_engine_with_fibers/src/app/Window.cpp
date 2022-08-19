@@ -18,6 +18,10 @@ void Window::GetSize(uint32_t* w, uint32_t*h) const {
     *h = m_h;
 }
 
+Clock::time_point Window::GetLastQuitTime() const {
+    std::scoped_lock scoped(m_lock);
+    return m_lastQuitTime;
+}
 std::vector<WindowMsg> Window::PopMsg() {
     std::vector<WindowMsg> result;
     {

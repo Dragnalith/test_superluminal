@@ -7,7 +7,6 @@
 // This define is set in the example .vcxproj file and need to be replicated in your app or by adding it to your imconfig.h file.
 
 #include <imgui/imgui.h>
-#include <imgui/backends/imgui_impl_win32.h>
 #include <imgui/backends/imgui_impl_dx12.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -15,6 +14,7 @@
 
 #include <app/Window.h>
 #include <app/WindowManager.h>
+#include <app/DearImGuiManager.h>
 
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
@@ -61,15 +61,14 @@ FrameContext* WaitForNextFrameResources();
 #if 0
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
-
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 
 // Main code
 int main(int, char**)
 {
-    // Create application window
-    ImGui_ImplWin32_EnableDpiAwareness();
+
 #if 0
     WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, _T("ImGui Example"), NULL };
     ::RegisterClassEx(&wc);
@@ -93,19 +92,10 @@ int main(int, char**)
     ::UpdateWindow(window.GetHandle());
 #endif
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(window.GetHandle());
+    app::DearImGuiManager imguiManager;
     ImGui_ImplDX12_Init(g_pd3dDevice, NUM_FRAMES_IN_FLIGHT,
         DXGI_FORMAT_R8G8B8A8_UNORM, g_pd3dSrvDescHeap,
         g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -135,24 +125,20 @@ int main(int, char**)
     bool done = false;
     uint32_t w, h;
     window.GetSize(&w, &h);
-    while (!done)
+    auto lastQuitTime = window.GetLastQuitTime();
+
+    app::Clock::time_point lastFrameTime = app::Clock::now() - std::chrono::milliseconds(16);
+    while (lastQuitTime >= window.GetLastQuitTime())
     {
-        // Poll and handle messages (inputs, window resize, etc.)
-        // See the WndProc() function below for our to dispatch events to the Win32 backend.
-        MSG msg;
-        while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
-        {
-            ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
-            if (msg.message == WM_QUIT)
-                done = true;
-        }
+        auto now = app::Clock::now();
+        std::chrono::duration<float> deltatime = now - lastFrameTime;
+        lastFrameTime = now;
         uint32_t nextW, nextH;
         window.GetSize(&nextW, &nextH);
 
         // Update ImGUI
         for (auto& msg : window.PopMsg()) {
-            ImGui_ImplWin32_WndProcHandler(msg.hWnd, msg.msg, msg.wParam, msg.lParam);
+            imguiManager.WndProcHandler(msg.hWnd, msg.msg, msg.wParam, msg.lParam);
         }
         // Update Swapchain
         if (g_pd3dDevice != NULL && (nextW != w || nextH != h))
@@ -170,8 +156,7 @@ int main(int, char**)
 
         // Start the Dear ImGui frame
         ImGui_ImplDX12_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
+        imguiManager.Update(windowManager, window, deltatime.count());
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
@@ -253,8 +238,6 @@ int main(int, char**)
 
     // Cleanup
     ImGui_ImplDX12_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
 
     CleanupDeviceD3D();
 #if 0
