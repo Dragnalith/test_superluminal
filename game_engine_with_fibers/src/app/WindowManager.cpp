@@ -65,7 +65,6 @@ struct WindowManagerImpl {
                     std::scoped_lock scope(m_lock);
                     m_w = static_cast<int>(LOWORD(lParam));
                     m_h = static_cast<int>(HIWORD(lParam));
-                    std::cout << "Size changed: " << m_w << ", " << m_h << "\n";
                 }
                 return 0;
             case WM_SYSCOMMAND:
