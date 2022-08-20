@@ -12,8 +12,10 @@
 #include <app/DearImGuiManager.h>
 #include <app/Renderer.h>
 #include <app/FrameData.h>
+#include <app/JobSystem.h>
 
 #include <Superluminal/PerformanceAPI.h>
+#include <iostream>
 
 struct AppState
 {
@@ -92,6 +94,10 @@ void CopyImDrawData(const ImDrawData* fromData, app::FrameData* frameData) {
 
 int main()
 {
+    app::JobSystem::Start([] () {
+        std::cout << "Hello World\n";
+    });
+
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     PerformanceAPI_SetCurrentThreadName("Main Thread");
     app::WindowManager windowManager;

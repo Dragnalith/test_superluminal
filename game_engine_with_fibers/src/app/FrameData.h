@@ -13,15 +13,15 @@ struct DrawList
     ImVector<ImDrawCmd>     CmdBuffer;
     ImVector<ImDrawIdx>     IdxBuffer;
     ImVector<ImDrawVert>    VtxBuffer;
-    ImDrawListFlags         Flags;
+    ImDrawListFlags         Flags = 0;
 };
 
 struct DrawData
 {
-    bool            Valid;
-    int             CmdListsCount;
-    int             TotalIdxCount;
-    int             TotalVtxCount;
+    bool            Valid = false;
+    int             CmdListsCount = 0;
+    int             TotalIdxCount = 0;
+    int             TotalVtxCount = 0;
     ImVec2          DisplayPos;
     ImVec2          DisplaySize;
     ImVec2          FramebufferScale;

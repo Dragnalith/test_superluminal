@@ -116,6 +116,7 @@
   <ItemGroup>
     <ClCompile Include="src\app\DearImGuiManager.cpp" />
     <ClCompile Include="src\app\DearImGuiRenderer.cpp" />
+    <ClCompile Include="src\app\JobSystem.cpp" />
     <ClCompile Include="src\app\RenderDevice.cpp" />
     <ClCompile Include="src\app\Renderer.cpp" />
     <ClCompile Include="src\app\SwapChain.cpp" />
@@ -132,6 +133,7 @@
     <ClInclude Include="src\app\DearImGuiManager.h" />
     <ClInclude Include="src\app\DearImGuiRenderer.h" />
     <ClInclude Include="src\app\FrameData.h" />
+    <ClInclude Include="src\app\JobSystem.h" />
     <ClInclude Include="src\app\RenderDevice.h" />
     <ClInclude Include="src\app\Renderer.h" />
     <ClInclude Include="src\app\SpinLock.h" />
