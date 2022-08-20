@@ -2,6 +2,7 @@
 #include <app/RenderDevice.h>
 #include <app/DearImGuiRenderer.h>
 #include <app/SwapChain.h>
+#include <app/FrameData.h>
 
 #include <imgui/imgui.h>
 #include <app/Util.h>
@@ -79,12 +80,12 @@ Renderer::~Renderer()
     if (m_impl->gpuCompletionfenceEvent) { ::CloseHandle(m_impl->gpuCompletionfenceEvent); m_impl->gpuCompletionfenceEvent = nullptr; }
 }
 
-void Renderer::Render(int width, int height, bool fullscreen, ImDrawData* drawData) {
+void Renderer::Render(const FrameData& frameData) {
 
-    if (m_impl->swapChain.NeedResize(width, height, fullscreen))
+    if (m_impl->swapChain.NeedResize(frameData.width, frameData.height, frameData.fullscreen))
     {
         m_impl->WaitForPresent();
-        m_impl->swapChain.Resize(width, height, fullscreen);
+        m_impl->swapChain.Resize(frameData.width, frameData.height, frameData.fullscreen);
     }
     m_impl->frameIndex += 1;
     FrameContext* frameCtx = &m_impl->frameContext[m_impl->frameIndex % RendererImpl::NUM_FRAMES_IN_FLIGHT];
@@ -106,7 +107,7 @@ void Renderer::Render(int width, int height, bool fullscreen, ImDrawData* drawDa
     m_impl->commandList->ClearRenderTargetView(m_impl->swapChain.GetCurrentRenderTargetDescriptor(), clear_color_with_alpha, 0, NULL);
     m_impl->commandList->OMSetRenderTargets(1, &m_impl->swapChain.GetCurrentRenderTargetDescriptor(), FALSE, NULL);
 
-    m_impl->imguiRenderer.Render(m_impl->commandList, drawData);
+    m_impl->imguiRenderer.Render(m_impl->commandList, frameData.drawData);
 
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_PRESENT;
@@ -115,7 +116,7 @@ void Renderer::Render(int width, int height, bool fullscreen, ImDrawData* drawDa
 
     m_impl->WaitForPresent();
     m_impl->renderDevice.GetCommandQueue()->ExecuteCommandLists(1, (ID3D12CommandList* const*)&m_impl->commandList);
-    m_impl->swapChain.Present(0);
+    m_impl->swapChain.Present(frameData.vsync ? 1 : 0);
     //swapChain->Present(0);
     m_impl->lastPresentedFrameIndex = m_impl->frameIndex;
     m_impl->renderDevice.GetCommandQueue()->Signal(m_impl->gpuCompletionfence, m_impl->lastPresentedFrameIndex);

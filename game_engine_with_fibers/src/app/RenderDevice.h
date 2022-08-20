@@ -8,6 +8,9 @@ namespace app
 
 class Window;
 
+/*
+ * The RenderDevice own the D3D12Device and the D3D12CommandQueue
+ */
 class RenderDevice
 {
 public:

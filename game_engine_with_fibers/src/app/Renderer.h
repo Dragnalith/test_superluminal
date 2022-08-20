@@ -10,6 +10,7 @@ namespace app
 class RenderDevice;
 class SwapChain;
 class DearImGuiManager;
+struct FrameData;
 
 struct RendererImpl;
 
@@ -19,7 +20,7 @@ public:
 	Renderer(RenderDevice& renderDevice, SwapChain& swapChain, DearImGuiManager& manager);
 	~Renderer();
 
-	void Render(int width, int height, bool fullscreen, ImDrawData* drawData);
+	void Render(const FrameData& frameData);
 	void WaitForPresent();
 
 private:

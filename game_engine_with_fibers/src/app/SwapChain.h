@@ -16,6 +16,14 @@ class RenderDevice;
 class Window;
 
 struct SwapChainImpl;
+
+/*
+ * Given a window, own swapchain object and related resources
+ * 
+ * The swapchain has the ability to be resized, but be careful about
+ * synchronization. It should not be resized while it is used by the GPU
+ * for some rendering
+ */
 class SwapChain
 {
 public:

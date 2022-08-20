@@ -1,5 +1,4 @@
 // TODO
-// - Copy ImDrawData
 // - Platform Lib
 // - Input independent from Win32
 // - precompiled header
@@ -12,10 +11,12 @@
 #include <app/WindowManager.h>
 #include <app/DearImGuiManager.h>
 #include <app/Renderer.h>
+#include <app/FrameData.h>
 
 struct AppState
 {
     bool fullscreen = false;
+    bool vsync = true;
     bool show_demo_window = true;
     bool show_another_window = false;
     float f = 0.0f;
@@ -46,6 +47,7 @@ void UpdateGUI(AppState& state) {
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Checkbox("Fullscreen", &state.fullscreen);
+        ImGui::Checkbox("Vsync", &state.vsync);
 
         ImGui::End();
     }
@@ -59,6 +61,31 @@ void UpdateGUI(AppState& state) {
             state.show_another_window = false;
         ImGui::End();
     }
+}
+
+void CopyImDrawData(const ImDrawData* fromData, app::FrameData* frameData) {
+    frameData->drawData.Valid = fromData->Valid;
+    frameData->drawData.CmdListsCount = fromData->CmdListsCount;
+    frameData->drawData.TotalIdxCount = fromData->TotalIdxCount;
+    frameData->drawData.TotalVtxCount = fromData->TotalVtxCount;
+    frameData->drawData.DisplayPos = fromData->DisplayPos;
+    frameData->drawData.DisplaySize = fromData->DisplaySize;
+    frameData->drawData.FramebufferScale = fromData->FramebufferScale;
+
+    for (size_t i = 0; i < frameData->drawData.CmdListsCount; ++i) {
+        frameData->drawData.DrawLists.emplace_back();
+        
+        ImDrawList& fromList = *fromData->CmdLists[i];
+        app::DrawList& toList = frameData->drawData.DrawLists.back();
+        toList.Flags = fromList.Flags;
+        toList.CmdBuffer = fromList.CmdBuffer;
+        toList.IdxBuffer = fromList.IdxBuffer;
+        toList.VtxBuffer = fromList.VtxBuffer;
+        ASSERT_MSG(toList.CmdBuffer.size() == fromList.CmdBuffer.size(), "ImGUI cmdbuffer data copy failed");
+        ASSERT_MSG(toList.IdxBuffer.size() == fromList.IdxBuffer.size(), "ImGUI idxbuffer data copy failed");
+        ASSERT_MSG(toList.VtxBuffer.size() == fromList.VtxBuffer.size(), "ImGUI vtxbuffer data copy failed");
+    }
+    ASSERT_MSG(frameData->drawData.DrawLists.size() == frameData->drawData.CmdListsCount, "ImGUI data copy failed");
 }
 
 int main()
@@ -75,12 +102,20 @@ int main()
     // Main loop
     auto lastQuitTime = window.GetLastQuitTime();
     app::Clock::time_point lastFrameTime = app::Clock::now() - std::chrono::milliseconds(16);
+    uint64_t frameIndex = 0;
     while (lastQuitTime >= window.GetLastQuitTime())
     {
         renderer.WaitForPresent();
+        frameIndex += 1;
         auto now = app::Clock::now();
         std::chrono::duration<float> deltatime = now - lastFrameTime;
         lastFrameTime = now;
+
+
+        app::FrameData frameData;
+        frameData.frameIndex = frameIndex;
+        frameData.deltatime = deltatime.count();
+        window.GetSize(&frameData.width, &frameData.height);
 
         // Update ImGUI
         for (auto& msg : window.PopMsg()) {
@@ -91,12 +126,13 @@ int main()
         imguiManager.Update(windowManager, window, deltatime.count());
 
         UpdateGUI(state);
+        frameData.fullscreen = state.fullscreen;
+        frameData.vsync = state.vsync;
 
         ImGui::Render(); // Prepare ImDrawData for the current frame
         ImDrawData* drawData = ImGui::GetDrawData(); // Valid until DearImGuiManager::Update()
-        int w, h;
-        window.GetSize(&w, &h);
-        renderer.Render(w, h, state.fullscreen, drawData); 
+        CopyImDrawData(drawData, &frameData);
+        renderer.Render(frameData); 
     }
 
     return 0;

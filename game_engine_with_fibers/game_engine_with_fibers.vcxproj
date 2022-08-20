@@ -118,7 +118,6 @@
     <ClCompile Include="src\app\SwapChain.cpp" />
     <ClCompile Include="src\app\Window.cpp" />
     <ClCompile Include="src\app\WindowManager.cpp" />
-    <ClCompile Include="src\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
     <ClCompile Include="src\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
@@ -129,6 +128,7 @@
   <ItemGroup>
     <ClInclude Include="src\app\DearImGuiManager.h" />
     <ClInclude Include="src\app\DearImGuiRenderer.h" />
+    <ClInclude Include="src\app\FrameData.h" />
     <ClInclude Include="src\app\RenderDevice.h" />
     <ClInclude Include="src\app\Renderer.h" />
     <ClInclude Include="src\app\SpinLock.h" />
@@ -136,7 +136,6 @@
     <ClInclude Include="src\app\Util.h" />
     <ClInclude Include="src\app\Window.h" />
     <ClInclude Include="src\app\WindowManager.h" />
-    <ClInclude Include="src\imgui\backends\imgui_impl_dx12.h" />
     <ClInclude Include="src\imgui\imconfig.h" />
     <ClInclude Include="src\imgui\imgui.h" />
     <ClInclude Include="src\imgui\imgui_internal.h" />

@@ -57,7 +57,7 @@ bool     ImGui_ImplDX12_Init(ID3D12Device* device, int num_frames_in_flight, DXG
     D3D12_CPU_DESCRIPTOR_HANDLE font_srv_cpu_desc_handle, D3D12_GPU_DESCRIPTOR_HANDLE font_srv_gpu_desc_handle);
 void     ImGui_ImplDX12_Shutdown();
 void     ImGui_ImplDX12_NewFrame();
-void     ImGui_ImplDX12_RenderDrawData(ImDrawData* draw_data, ID3D12GraphicsCommandList* graphics_command_list);
+void     ImGui_ImplDX12_RenderDrawData(const app::DrawData* draw_data, ID3D12GraphicsCommandList* graphics_command_list);
 
 // Use if you want to reset your rendering device without losing Dear ImGui state.
 void     ImGui_ImplDX12_InvalidateDeviceObjects();
@@ -102,7 +102,7 @@ static ImGui_ImplDX12_Data* ImGui_ImplDX12_GetBackendData()
 }
 
 // Functions
-static void ImGui_ImplDX12_SetupRenderState(ImDrawData* draw_data, ID3D12GraphicsCommandList* ctx, ImGui_ImplDX12_RenderBuffers* fr)
+static void ImGui_ImplDX12_SetupRenderState(const app::DrawData* draw_data, ID3D12GraphicsCommandList* ctx, ImGui_ImplDX12_RenderBuffers* fr)
 {
     ImGui_ImplDX12_Data* bd = ImGui_ImplDX12_GetBackendData();
 
@@ -168,7 +168,7 @@ static inline void SafeRelease(T*& res)
 }
 
 // Render function
-void ImGui_ImplDX12_RenderDrawData(ImDrawData* draw_data, ID3D12GraphicsCommandList* ctx)
+void ImGui_ImplDX12_RenderDrawData(const app::DrawData* draw_data, ID3D12GraphicsCommandList* ctx)
 {
     // Avoid rendering when minimized
     if (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f)
@@ -240,7 +240,7 @@ void ImGui_ImplDX12_RenderDrawData(ImDrawData* draw_data, ID3D12GraphicsCommandL
     ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource;
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
-        const ImDrawList* cmd_list = draw_data->CmdLists[n];
+        const app::DrawList* cmd_list = &draw_data->DrawLists[n];
         memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
         memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
         vtx_dst += cmd_list->VtxBuffer.Size;
@@ -259,18 +259,21 @@ void ImGui_ImplDX12_RenderDrawData(ImDrawData* draw_data, ID3D12GraphicsCommandL
     ImVec2 clip_off = draw_data->DisplayPos;
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
-        const ImDrawList* cmd_list = draw_data->CmdLists[n];
+        const app::DrawList* cmd_list = &draw_data->DrawLists[n];
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+            ASSERT_MSG(pcmd->UserCallback == nullptr, "We do not support imgui user callback");
             if (pcmd->UserCallback != NULL)
             {
+#if 0
                 // User callback, registered via ImDrawList::AddCallback()
                 // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
                 if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
                     ImGui_ImplDX12_SetupRenderState(draw_data, ctx, fr);
                 else
                     pcmd->UserCallback(cmd_list, pcmd);
+#endif
             }
             else
             {
@@ -795,10 +798,10 @@ DearImGuiRenderer::~DearImGuiRenderer()
     if (m_impl->descriptorHeap) { m_impl->descriptorHeap->Release(); m_impl->descriptorHeap = nullptr; }
 }
 
-void DearImGuiRenderer::Render(ID3D12GraphicsCommandList* commandList, ImDrawData* drawData) 
+void DearImGuiRenderer::Render(ID3D12GraphicsCommandList* commandList, const DrawData& drawData) 
 {
     commandList->SetDescriptorHeaps(1, &m_impl->descriptorHeap);
-    ImGui_ImplDX12_RenderDrawData(drawData, commandList);
+    ImGui_ImplDX12_RenderDrawData(&drawData, commandList);
 }
 
 }
