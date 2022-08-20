@@ -27,6 +27,7 @@ public:
     HANDLE GetWaitableObject() const;
 
     void Present(uint32_t syncInterval) const;
+    bool NeedResize(int width, int height) const;
 
     void Resize(int width, int height);
 private:

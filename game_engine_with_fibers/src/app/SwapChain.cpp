@@ -21,6 +21,8 @@ struct SwapChainImpl
     HANDLE waitableObject = nullptr;
     ID3D12Resource* mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
     D3D12_CPU_DESCRIPTOR_HANDLE mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
+    int width;
+    int height;
 
     void CreateRenderTarget() {
         for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
@@ -42,6 +44,7 @@ struct SwapChainImpl
 SwapChain::SwapChain(RenderDevice& device, app::Window& window)
     : m_impl(device)
 {
+    window.GetSize(&m_impl->width, &m_impl->height);
     HRESULT result = S_OK;
 
     {
@@ -127,11 +130,17 @@ void SwapChain::Present(uint32_t syncInterval) const {
     m_impl->swapChain->Present(syncInterval, 0);
 }
 
+bool SwapChain::NeedResize(int width, int height) const {
+    return m_impl->width != width || m_impl->height != height;
+}
+
 void SwapChain::Resize(int width, int height) {
     m_impl->CleanupRenderTarget();
     HRESULT result = m_impl->swapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
     assert(SUCCEEDED(result) && "Failed to resize swapchain.");
     m_impl->CreateRenderTarget();
+    m_impl->width = width;
+    m_impl->height = height;
 }
 
 }
