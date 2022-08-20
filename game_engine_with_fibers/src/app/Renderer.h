@@ -19,7 +19,8 @@ public:
 	Renderer(RenderDevice& renderDevice, SwapChain& swapChain, DearImGuiManager& manager);
 	~Renderer();
 
-	void Render(int width, int height, ImDrawData* drawData);
+	void Render(int width, int height, bool fullscreen, ImDrawData* drawData);
+	void WaitForPresent();
 
 private:
 	Pimpl<RendererImpl> m_impl;

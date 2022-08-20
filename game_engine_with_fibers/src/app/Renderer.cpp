@@ -15,11 +15,10 @@ namespace app
 struct FrameContext
 {
     ID3D12CommandAllocator* CommandAllocator;
-    UINT64                  FenceValue;
 };
 
 struct RendererImpl {
-    static constexpr int NUM_FRAMES_IN_FLIGHT = 1;
+    static constexpr int NUM_FRAMES_IN_FLIGHT = 8;
 
     RendererImpl(RenderDevice& device, SwapChain& sc, DearImGuiManager& manager) : renderDevice(device), swapChain(sc), imguiRenderer(device, manager) {}
 
@@ -27,50 +26,24 @@ struct RendererImpl {
     SwapChain& swapChain;
     DearImGuiRenderer imguiRenderer;
     FrameContext frameContext[NUM_FRAMES_IN_FLIGHT] = {};
-    uint32_t  frameIndex = 0;
+    uint64_t frameIndex = 0;
+    uint64_t lastPresentedFrameIndex = 0;
 
     ID3D12GraphicsCommandList* commandList = nullptr;
     ID3D12Fence* gpuCompletionfence = nullptr;
     HANDLE gpuCompletionfenceEvent = nullptr;
     uint64_t fenceLastSignaledValue = 0;
 
-    void WaitForLastSubmittedFrame()
-    {
-        FrameContext* frameCtx = &frameContext[frameIndex % NUM_FRAMES_IN_FLIGHT];
-
-        UINT64 fenceValue = frameCtx->FenceValue;
-        if (fenceValue == 0)
-            return; // No fence was signaled
-
-        frameCtx->FenceValue = 0;
-        if (gpuCompletionfence->GetCompletedValue() >= fenceValue)
+    void WaitForPresent() {
+        if (lastPresentedFrameIndex == 0) {
             return;
-
-        gpuCompletionfence->SetEventOnCompletion(fenceValue, gpuCompletionfenceEvent);
-        WaitForSingleObject(gpuCompletionfenceEvent, INFINITE);
-    }
-
-    FrameContext* WaitForNextFrameResources()
-    {
-        UINT nextFrameIndex = frameIndex + 1;
-        frameIndex = nextFrameIndex;
-
-        HANDLE waitableObjects[] = { swapChain.GetWaitableObject(), NULL};
-        DWORD numWaitableObjects = 1;
-
-        FrameContext* frameCtx = &frameContext[nextFrameIndex % NUM_FRAMES_IN_FLIGHT];
-        UINT64 fenceValue = frameCtx->FenceValue;
-        if (fenceValue != 0) // means no fence was signaled
-        {
-            frameCtx->FenceValue = 0;
-            gpuCompletionfence->SetEventOnCompletion(fenceValue, gpuCompletionfenceEvent);
-            waitableObjects[1] = gpuCompletionfenceEvent;
-            numWaitableObjects = 2;
         }
 
-        WaitForMultipleObjects(numWaitableObjects, waitableObjects, TRUE, INFINITE);
+        if (gpuCompletionfence->GetCompletedValue() >= lastPresentedFrameIndex)
+            return;
 
-        return frameCtx;
+        gpuCompletionfence->SetEventOnCompletion(lastPresentedFrameIndex, gpuCompletionfenceEvent);
+        WaitForSingleObject(gpuCompletionfenceEvent, INFINITE);
     }
 };
 
@@ -96,7 +69,7 @@ Renderer::Renderer(RenderDevice& device, SwapChain& sc, DearImGuiManager& manage
 
 Renderer::~Renderer()
 {
-    m_impl->WaitForLastSubmittedFrame();
+    m_impl->WaitForPresent();
 
     for (UINT i = 0; i < RendererImpl::NUM_FRAMES_IN_FLIGHT; i++) {
         if (m_impl->frameContext[i].CommandAllocator) { m_impl->frameContext[i].CommandAllocator->Release(); m_impl->frameContext[i].CommandAllocator = nullptr; }
@@ -106,13 +79,15 @@ Renderer::~Renderer()
     if (m_impl->gpuCompletionfenceEvent) { ::CloseHandle(m_impl->gpuCompletionfenceEvent); m_impl->gpuCompletionfenceEvent = nullptr; }
 }
 
-void Renderer::Render(int width, int height, ImDrawData* drawData) {
-    if (m_impl->swapChain.NeedResize(width, height))
+void Renderer::Render(int width, int height, bool fullscreen, ImDrawData* drawData) {
+
+    if (m_impl->swapChain.NeedResize(width, height, fullscreen))
     {
-        m_impl->WaitForLastSubmittedFrame();
-        m_impl->swapChain.Resize(width, height);
+        m_impl->WaitForPresent();
+        m_impl->swapChain.Resize(width, height, fullscreen);
     }
-    FrameContext* frameCtx = m_impl->WaitForNextFrameResources();
+    m_impl->frameIndex += 1;
+    FrameContext* frameCtx = &m_impl->frameContext[m_impl->frameIndex % RendererImpl::NUM_FRAMES_IN_FLIGHT];
     frameCtx->CommandAllocator->Reset();
 
     D3D12_RESOURCE_BARRIER barrier = {};
@@ -138,15 +113,17 @@ void Renderer::Render(int width, int height, ImDrawData* drawData) {
     m_impl->commandList->ResourceBarrier(1, &barrier);
     m_impl->commandList->Close();
 
+    m_impl->WaitForPresent();
     m_impl->renderDevice.GetCommandQueue()->ExecuteCommandLists(1, (ID3D12CommandList* const*)&m_impl->commandList);
-    m_impl->swapChain.Present(1);
+    m_impl->swapChain.Present(0);
     //swapChain->Present(0);
-
-    UINT64 fenceValue = m_impl->fenceLastSignaledValue + 1;
-    m_impl->renderDevice.GetCommandQueue()->Signal(m_impl->gpuCompletionfence, fenceValue);
-    m_impl->fenceLastSignaledValue = fenceValue;
-    frameCtx->FenceValue = fenceValue;
+    m_impl->lastPresentedFrameIndex = m_impl->frameIndex;
+    m_impl->renderDevice.GetCommandQueue()->Signal(m_impl->gpuCompletionfence, m_impl->lastPresentedFrameIndex);
 }
 
+void Renderer::WaitForPresent()
+{
+    m_impl->WaitForPresent();
+}
 
 }

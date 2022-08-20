@@ -27,9 +27,9 @@ public:
     HANDLE GetWaitableObject() const;
 
     void Present(uint32_t syncInterval) const;
-    bool NeedResize(int width, int height) const;
+    bool NeedResize(int width, int height, bool fullscreen) const;
 
-    void Resize(int width, int height);
+    void Resize(int width, int height, bool fullscreen);
 private:
     Pimpl<SwapChainImpl> m_impl;
 };

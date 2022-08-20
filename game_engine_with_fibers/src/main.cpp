@@ -15,6 +15,7 @@
 
 struct AppState
 {
+    bool fullscreen = false;
     bool show_demo_window = true;
     bool show_another_window = false;
     float f = 0.0f;
@@ -44,6 +45,8 @@ void UpdateGUI(AppState& state) {
         ImGui::Text("counter = %d", state.counter);
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Checkbox("Fullscreen", &state.fullscreen);
+
         ImGui::End();
     }
 
@@ -74,6 +77,7 @@ int main()
     app::Clock::time_point lastFrameTime = app::Clock::now() - std::chrono::milliseconds(16);
     while (lastQuitTime >= window.GetLastQuitTime())
     {
+        renderer.WaitForPresent();
         auto now = app::Clock::now();
         std::chrono::duration<float> deltatime = now - lastFrameTime;
         lastFrameTime = now;
@@ -92,7 +96,7 @@ int main()
         ImDrawData* drawData = ImGui::GetDrawData(); // Valid until DearImGuiManager::Update()
         int w, h;
         window.GetSize(&w, &h);
-        renderer.Render(w, h, drawData); 
+        renderer.Render(w, h, state.fullscreen, drawData); 
     }
 
     return 0;

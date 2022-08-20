@@ -65,6 +65,10 @@ struct WindowManagerImpl {
                     m_h = static_cast<int>(HIWORD(lParam));
                 }
                 return 0;
+            case WM_SYSKEYDOWN:
+            case WM_SYSKEYUP:
+                // prevent default behavior of system key, like ALT+ENTER
+                return 0;
             case WM_SYSCOMMAND:
                 if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
                     return 0;

@@ -7,7 +7,7 @@
 #include <dxgi1_4.h>
 
 
-static constexpr int NUM_BACK_BUFFERS = 3;
+static constexpr int NUM_BACK_BUFFERS = 2;
 
 namespace app
 {
@@ -23,6 +23,7 @@ struct SwapChainImpl
     D3D12_CPU_DESCRIPTOR_HANDLE mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
     int width;
     int height;
+    bool fullscreen;
 
     void CreateRenderTarget() {
         for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
@@ -94,6 +95,8 @@ SwapChain::SwapChain(RenderDevice& device, app::Window& window)
         ASSERT_MSG(result == S_OK, "CreateSwapChainForHwnd failed");
         result = swapChain1->QueryInterface(IID_PPV_ARGS(&m_impl->swapChain));
         ASSERT_MSG(result == S_OK, "SwapChain QueryInterface failed");
+        result = dxgiFactory->MakeWindowAssociation(window.GetHandle(), DXGI_MWA_NO_WINDOW_CHANGES);
+        ASSERT_MSG(result == S_OK, "Failed to make swapchain window assocation");
 
         swapChain1->Release();
         dxgiFactory->Release();
@@ -101,6 +104,9 @@ SwapChain::SwapChain(RenderDevice& device, app::Window& window)
         m_impl->waitableObject = m_impl->swapChain->GetFrameLatencyWaitableObject();
     }
 
+    BOOL fullscreenState;
+    m_impl->swapChain->GetFullscreenState(&fullscreenState, nullptr);
+    m_impl->fullscreen = fullscreenState != FALSE;
     m_impl->CreateRenderTarget();
 }
 
@@ -127,20 +133,23 @@ HANDLE SwapChain::GetWaitableObject() const {
 }
 
 void SwapChain::Present(uint32_t syncInterval) const {
-    m_impl->swapChain->Present(syncInterval, 0);
+    HRESULT result = m_impl->swapChain->Present(syncInterval, 0);
+    ASSERT_MSG(result == S_OK, "Swapchain present has failed");
 }
 
-bool SwapChain::NeedResize(int width, int height) const {
-    return m_impl->width != width || m_impl->height != height;
+bool SwapChain::NeedResize(int width, int height, bool fullscreen) const {
+    return m_impl->fullscreen != fullscreen || m_impl->width != width || m_impl->height != height;
 }
 
-void SwapChain::Resize(int width, int height) {
+void SwapChain::Resize(int width, int height, bool fullscreen) {
     m_impl->CleanupRenderTarget();
+    m_impl->swapChain->SetFullscreenState(fullscreen, nullptr);
     HRESULT result = m_impl->swapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
-    assert(SUCCEEDED(result) && "Failed to resize swapchain.");
+    ASSERT_MSG(result == S_OK, "Failed to resize swapchain.");
     m_impl->CreateRenderTarget();
     m_impl->width = width;
     m_impl->height = height;
+    m_impl->fullscreen = fullscreen;
 }
 
 }
