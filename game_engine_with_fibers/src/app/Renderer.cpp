@@ -92,12 +92,12 @@ void Renderer::Render(const FrameData& frameData) {
     frameCtx->CommandAllocator->Reset();
 
     D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource   = m_impl->swapChain.GetCurrentResource();
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    barrier.Transition.pResource = m_impl->swapChain.GetCurrentResource();
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-    barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
     m_impl->commandList->Reset(frameCtx->CommandAllocator, NULL);
     m_impl->commandList->ResourceBarrier(1, &barrier);
 
@@ -110,10 +110,13 @@ void Renderer::Render(const FrameData& frameData) {
     m_impl->imguiRenderer.Render(m_impl->commandList, frameData.drawData);
 
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_PRESENT;
+    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
     m_impl->commandList->ResourceBarrier(1, &barrier);
     m_impl->commandList->Close();
+}
 
+void Renderer::Kick(const FrameData& frameData)
+{
     m_impl->WaitForPresent();
     m_impl->renderDevice.GetCommandQueue()->ExecuteCommandLists(1, (ID3D12CommandList* const*)&m_impl->commandList);
     m_impl->swapChain.Present(frameData.vsync ? 1 : 0);

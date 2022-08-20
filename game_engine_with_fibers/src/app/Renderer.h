@@ -21,6 +21,7 @@ public:
 	~Renderer();
 
 	void Render(const FrameData& frameData);
+	void Kick(const FrameData& frameData);
 	void WaitForPresent();
 
 private:

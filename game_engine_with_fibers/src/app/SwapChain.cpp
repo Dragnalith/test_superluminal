@@ -6,7 +6,7 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 
-
+#include <iostream>
 static constexpr int NUM_BACK_BUFFERS = 2;
 
 namespace app
@@ -143,7 +143,9 @@ bool SwapChain::NeedResize(int width, int height, bool fullscreen) const {
 
 void SwapChain::Resize(int width, int height, bool fullscreen) {
     m_impl->CleanupRenderTarget();
-    m_impl->swapChain->SetFullscreenState(fullscreen, nullptr);
+    if (m_impl->fullscreen != fullscreen) {
+        m_impl->swapChain->SetFullscreenState(fullscreen, nullptr);
+    }
     HRESULT result = m_impl->swapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
     ASSERT_MSG(result == S_OK, "Failed to resize swapchain.");
     m_impl->CreateRenderTarget();

@@ -13,6 +13,8 @@
 #include <app/Renderer.h>
 #include <app/FrameData.h>
 
+#include <Superluminal/PerformanceAPI.h>
+
 struct AppState
 {
     bool fullscreen = false;
@@ -91,6 +93,7 @@ void CopyImDrawData(const ImDrawData* fromData, app::FrameData* frameData) {
 int main()
 {
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    PerformanceAPI_SetCurrentThreadName("Main Thread");
     app::WindowManager windowManager;
     app::Window& window = windowManager.Create("Game Engine With Fiber");
     app::RenderDevice renderDevice;
@@ -105,34 +108,47 @@ int main()
     uint64_t frameIndex = 0;
     while (lastQuitTime >= window.GetLastQuitTime())
     {
-        renderer.WaitForPresent();
-        frameIndex += 1;
-        auto now = app::Clock::now();
-        std::chrono::duration<float> deltatime = now - lastFrameTime;
-        lastFrameTime = now;
-
-
         app::FrameData frameData;
         frameData.frameIndex = frameIndex;
-        frameData.deltatime = deltatime.count();
-        window.GetSize(&frameData.width, &frameData.height);
+        frameIndex += 1;
+        std::string frameName = std::format("Index = {}", frameIndex);
+        PERFORMANCEAPI_INSTRUMENT_DATA("Frame", frameName.c_str());
+        {
+            PERFORMANCEAPI_INSTRUMENT_DATA("Update", frameName.c_str());
+            auto now = app::Clock::now();
+            std::chrono::duration<float> deltatime = now - lastFrameTime;
+            lastFrameTime = now;
 
-        // Update ImGUI
-        for (auto& msg : window.PopMsg()) {
-            imguiManager.WndProcHandler(msg.hWnd, msg.msg, msg.wParam, msg.lParam);
+
+            frameData.deltatime = deltatime.count();
+            window.GetSize(&frameData.width, &frameData.height);
+
+            // Update ImGUI
+            for (auto& msg : window.PopMsg()) {
+                imguiManager.WndProcHandler(msg.hWnd, msg.msg, msg.wParam, msg.lParam);
+            }
+
+            // Start the Dear ImGui frame
+            imguiManager.Update(windowManager, window, deltatime.count());
+
+            UpdateGUI(state);
+            frameData.fullscreen = state.fullscreen;
+            frameData.vsync = state.vsync;
+
+            ImGui::Render(); // Prepare ImDrawData for the current frame
+            ImDrawData* drawData = ImGui::GetDrawData(); // Valid until DearImGuiManager::Update()
+            CopyImDrawData(drawData, &frameData);
         }
 
-        // Start the Dear ImGui frame
-        imguiManager.Update(windowManager, window, deltatime.count());
+        {
+            PERFORMANCEAPI_INSTRUMENT_DATA("Render", frameName.c_str());
+            renderer.Render(frameData); 
+        }
 
-        UpdateGUI(state);
-        frameData.fullscreen = state.fullscreen;
-        frameData.vsync = state.vsync;
-
-        ImGui::Render(); // Prepare ImDrawData for the current frame
-        ImDrawData* drawData = ImGui::GetDrawData(); // Valid until DearImGuiManager::Update()
-        CopyImDrawData(drawData, &frameData);
-        renderer.Render(frameData); 
+        {
+            PERFORMANCEAPI_INSTRUMENT_DATA("Kick", frameName.c_str());
+            renderer.Kick(frameData);
+        }
     }
 
     return 0;
