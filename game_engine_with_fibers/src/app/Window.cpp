@@ -1,5 +1,4 @@
 #include "Window.h"
-#include <imgui/backends/imgui_impl_win32.h>
 #include <tchar.h>
 
 namespace app

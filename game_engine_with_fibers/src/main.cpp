@@ -14,8 +14,7 @@
 // This define is set in the example .vcxproj file and need to be replicated in your app or by adding it to your imconfig.h file.
 
 #include <imgui/imgui.h>
-#include <imgui/backends/imgui_impl_dx12.h>
-#include <imgui/backends/imgui_impl_win32.h>
+
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <tchar.h>
@@ -27,6 +26,7 @@
 #include <app/SwapChain.h>
 #include <app/WindowManager.h>
 #include <app/DearImGuiManager.h>
+#include <app/DearImGuiRenderer.h>
 
 struct FrameContext
 {
@@ -35,13 +35,11 @@ struct FrameContext
 };
 
 // Data
-static int const                    NUM_FRAMES_IN_FLIGHT = 3;
+static int const                    NUM_FRAMES_IN_FLIGHT = 1;
 static FrameContext                 g_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
 static UINT                         g_frameIndex = 0;
 
-static int const                    NUM_BACK_BUFFERS = 3;
-
-static ID3D12DescriptorHeap*        g_pd3dSrvDescHeap = NULL;
+//static ID3D12DescriptorHeap*        g_pd3dSrvDescHeap = NULL;
 static ID3D12GraphicsCommandList*   g_pd3dCommandList = NULL;
 static ID3D12Fence*                 g_fence = NULL;
 static HANDLE                       g_fenceEvent = NULL;
@@ -64,22 +62,20 @@ int main(int, char**)
     app::RenderDevice renderDevice;
     app::SwapChain swapChain(renderDevice, window);
 
-    if (!CreateRenderer(renderDevice))
-    {
-        CleanupRenderer();
-
-        return 1;
-    }
-
 
 
 
     // Setup Platform/Renderer backends
     app::DearImGuiManager imguiManager;
-    ImGui_ImplDX12_Init(renderDevice.GetDevice(), NUM_FRAMES_IN_FLIGHT,
-        DXGI_FORMAT_R8G8B8A8_UNORM, g_pd3dSrvDescHeap,
-        g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-        g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+    app::DearImGuiRenderer imguiRenderer(renderDevice, imguiManager);
+
+
+    if (!CreateRenderer(renderDevice))
+    {
+        CleanupRenderer();
+
+        return 1;
+}
 
     // Our state
     bool show_demo_window = true;
@@ -87,7 +83,6 @@ int main(int, char**)
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Main loop
-    bool done = false;
     int w, h;
     window.GetSize(&w, &h);
     auto lastQuitTime = window.GetLastQuitTime();
@@ -114,11 +109,8 @@ int main(int, char**)
             swapChain.Resize(w, h);
 
         }
-        if (done)
-            break;
 
         // Start the Dear ImGui frame
-        ImGui_ImplDX12_NewFrame();
         imguiManager.Update(windowManager, window, deltatime.count());
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -158,8 +150,7 @@ int main(int, char**)
             ImGui::End();
         }
 
-        // Rendering
-        ImGui::Render();
+
 
         FrameContext* frameCtx = WaitForNextFrameResources(swapChain);
         frameCtx->CommandAllocator->Reset();
@@ -178,8 +169,10 @@ int main(int, char**)
         const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
         g_pd3dCommandList->ClearRenderTargetView(swapChain.GetCurrentRenderTargetDescriptor(), clear_color_with_alpha, 0, NULL);
         g_pd3dCommandList->OMSetRenderTargets(1, &swapChain.GetCurrentRenderTargetDescriptor(), FALSE, NULL);
-        g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
-        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), g_pd3dCommandList);
+        // Rendering
+        ImGui::Render(); // Prepare ImDrawData for the current frame
+        imguiRenderer.Render(g_pd3dCommandList, ImGui::GetDrawData());
+
         barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
         barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_PRESENT;
         g_pd3dCommandList->ResourceBarrier(1, &barrier);
@@ -196,10 +189,7 @@ int main(int, char**)
     }
 
     WaitForLastSubmittedFrame();
-
-    // Cleanup
-    ImGui_ImplDX12_Shutdown();
-
+   
     CleanupRenderer();
 
     return 0;
@@ -213,23 +203,6 @@ int main(int, char**)
 
 bool CreateRenderer(app::RenderDevice& renderDevice)
 {
-
-
-
-
-
-
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-        desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        desc.NumDescriptors = 1;
-        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        if (renderDevice.GetDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dSrvDescHeap)) != S_OK)
-            return false;
-    }
-
-
-
     for (UINT i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
         if (renderDevice.GetDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&g_frameContext[i].CommandAllocator)) != S_OK)
             return false;
@@ -253,7 +226,6 @@ void CleanupRenderer()
     for (UINT i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
         if (g_frameContext[i].CommandAllocator) { g_frameContext[i].CommandAllocator->Release(); g_frameContext[i].CommandAllocator = NULL; }
     if (g_pd3dCommandList) { g_pd3dCommandList->Release(); g_pd3dCommandList = NULL; }
-    if (g_pd3dSrvDescHeap) { g_pd3dSrvDescHeap->Release(); g_pd3dSrvDescHeap = NULL; }
     if (g_fence) { g_fence->Release(); g_fence = NULL; }
     if (g_fenceEvent) { CloseHandle(g_fenceEvent); g_fenceEvent = NULL; }
 }

@@ -34,9 +34,6 @@
     <ClCompile Include="src\imgui\imgui_widgets.cpp">
       <Filter>src\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="src\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>src\imgui\backends</Filter>
-    </ClCompile>
     <ClCompile Include="src\imgui\backends\imgui_impl_dx12.cpp">
       <Filter>src\imgui\backends</Filter>
     </ClCompile>
@@ -58,6 +55,9 @@
     <ClCompile Include="src\app\WindowManager.cpp">
       <Filter>src\app</Filter>
     </ClCompile>
+    <ClCompile Include="src\app\DearImGuiRenderer.cpp">
+      <Filter>src\app</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\imgui\imconfig.h">
@@ -68,9 +68,6 @@
     </ClInclude>
     <ClInclude Include="src\imgui\imgui_internal.h">
       <Filter>src\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\imgui\backends\imgui_impl_win32.h">
-      <Filter>src\imgui\backends</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui\backends\imgui_impl_dx12.h">
       <Filter>src\imgui\backends</Filter>
@@ -106,6 +103,9 @@
       <Filter>src\app</Filter>
     </ClInclude>
     <ClInclude Include="src\app\Util.h">
+      <Filter>src\app</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\DearImGuiRenderer.h">
       <Filter>src\app</Filter>
     </ClInclude>
   </ItemGroup>

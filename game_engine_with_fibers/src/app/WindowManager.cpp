@@ -5,8 +5,6 @@
 #include <app/Util.h>
 #include <app/Window.h>
 
-#include <imgui/backends/imgui_impl_win32.h>
-
 #include <windows.h>
 #include <windowsx.h> // GET_X_LPARAM(), GET_Y_LPARAM()
 
