@@ -1,5 +1,5 @@
 // TODO
-// - Platform Lib
+// - foundation, engine, app
 // - Input independent from Win32
 // - precompiled header
 
@@ -96,6 +96,15 @@ int main()
 {
     app::JobSystem::Start([] () {
         std::cout << "Hello World\n";
+        app::JobHandle handle;
+        for (int i = 0; i < 10; i++) {
+            app::JobSystem::DispatchJob(handle, [i] {
+                std::cout << "Some Job: " << i << "\n";
+            });
+        }
+        app::JobSystem::Wait(handle);
+        std::cout << "Good Night World\n";
+
     });
 
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
