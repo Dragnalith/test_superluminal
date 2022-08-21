@@ -14,6 +14,11 @@
 // Superluminal Readability
 // - Hard to visualize which job/fiber is scheduled when because
 // - Hard to understand the begin and the end of "zone"
+//
+// Superluminal Other note
+// - About "find function", wouldn't it be good to see the result of selected function to function list and callgraph?
+// - Still hard to visualize on the y-axis, would it be possible to remove some of the leaf function and hide some of the root function
+// - Hard to understand "global information"
 
 #include <imgui/imgui.h>
 
