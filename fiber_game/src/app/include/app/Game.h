@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fnd/Util.h>
 #include <fw/IGame.h>
 
 namespace engine
@@ -13,9 +14,12 @@ namespace app
 class Game : public engine::IGame
 {
 public:
-virtual void Update(engine::FrameData& frameData);
+    Game();
+    virtual void Update(engine::FrameData& frameData);
 
 private:
+    engine::Clock::time_point m_lastQuitTime;
+
     bool m_fullscreen = false;
     bool m_vsync = true;
     bool m_show_demo_window = true;

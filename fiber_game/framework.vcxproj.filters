@@ -34,6 +34,9 @@
     <ClCompile Include="src\framework\src\private\DefaultFramePipeline.cpp">
       <Filter>private</Filter>
     </ClCompile>
+    <ClCompile Include="src\framework\src\private\FrameManager.cpp">
+      <Filter>private</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/framework/src/private/imgui/imgui_internal.h">
@@ -79,6 +82,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src\framework\include\fw\DefaultFramePipeline.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\framework\include\fw\FrameManager.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

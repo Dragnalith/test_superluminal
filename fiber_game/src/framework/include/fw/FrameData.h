@@ -14,12 +14,15 @@ namespace engine
 // This data is read of the FrameManager to change its behavior
 struct FrameUpdateResult
 {
+    static constexpr int DefaultMaxFrameLatency = 3;
     bool stop = false; // Stop the FrameManager, i.e stop scheduling new frame, i.e stop the app
-    int frameLatency = 3; // Number of frame which can be interleaved at the same time
+    int maxFrameLatency = DefaultMaxFrameLatency; // Number of frame which can be interleaved at the same time
 };
 
 struct RenderContext
 {
+    int index = -1;
+    uint64_t frameIndex = 0xdeadbeef;
     ID3D12CommandAllocator* CommandAllocator = nullptr;
     ID3D12GraphicsCommandList* commandList = nullptr;
 };
@@ -46,14 +49,18 @@ struct DrawData
 
 struct FrameData
 {
-    uint64_t frameIndex = 0;
+    int64_t frameIndex = 0;
+    int maxFrameLatency = 3;
     float deltatime = 0.0166f;
     bool fullscreen = false;
     bool vsync = true;
     int width = 1280;
     int height = 800;
+    uint32_t backBufferIndex = 0xffffffff;
+    uint32_t debugSwapChainbackBufferIndex = 0xffffffff;
     DrawData drawData;
     RenderContext* renderContext;
+    FrameUpdateResult result;
 };
 
 }

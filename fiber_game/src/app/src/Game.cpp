@@ -2,7 +2,7 @@
 
 #include <fw/FrameData.h>
 #include <app/Game.h>
-
+#include <fnd/Window.h>
 namespace engine
 {
 struct FrameData;
@@ -11,9 +11,12 @@ struct FrameData;
 namespace app
 {
 
-
+Game::Game() {
+    m_lastQuitTime = engine::Window::GetMainWindow().GetLastQuitTime();
+}
 void Game::Update(engine::FrameData& frameData) 
 {
+    frameData.result.stop = m_lastQuitTime != engine::Window::GetMainWindow().GetLastQuitTime();
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
     if (m_show_demo_window)
         ImGui::ShowDemoWindow(&m_show_demo_window);
@@ -37,6 +40,9 @@ void Game::Update(engine::FrameData& frameData)
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Checkbox("Fullscreen", &m_fullscreen);
         ImGui::Checkbox("Vsync", &m_vsync);
+        int maxFrameLatency = frameData.maxFrameLatency;
+        ImGui::SliderInt("MaxFrameLatency", &maxFrameLatency, 1, 3);
+        frameData.result.maxFrameLatency = maxFrameLatency;
 
         ImGui::End();
     }

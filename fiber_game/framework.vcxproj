@@ -84,7 +84,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ImTextureID=ImU64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ImTextureID=ImU64;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>./src/lib/imgui/include;./src/foundation/include;./src/framework/include;./src/framework/src;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -103,7 +103,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>ImTextureID=ImU64;NDEBUG;_CONSOLE;PERFORMANCEAPI_ENABLED=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ImTextureID=ImU64;_CONSOLE;PERFORMANCEAPI_ENABLED=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>./src/lib/imgui/include;./src/foundation/include;./src/framework/include;./src/framework/src;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -130,6 +130,7 @@
     <ClInclude Include="src/framework/src/private/imgui/imstd_textedit.h" />
     <ClInclude Include="src/framework/src/private/imgui/imstd_truetype.h" />
     <ClInclude Include="src\framework\include\fw\DefaultFramePipeline.h" />
+    <ClInclude Include="src\framework\include\fw\FrameManager.h" />
     <ClInclude Include="src\framework\include\fw\IFramePipeline.h" />
     <ClInclude Include="src\framework\include\fw\IGame.h" />
   </ItemGroup>
@@ -145,6 +146,7 @@
     <ClCompile Include="src/framework/src/private/imgui/imgui_widgets.cpp" />
     <ClCompile Include="src/framework/src/private/imgui/imgui.cpp" />
     <ClCompile Include="src\framework\src\private\DefaultFramePipeline.cpp" />
+    <ClCompile Include="src\framework\src\private\FrameManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="foundation.vcxproj">

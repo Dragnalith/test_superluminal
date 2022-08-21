@@ -35,7 +35,7 @@ int main() {
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     PerformanceAPI_SetCurrentThreadName("Main Thread");
 
-#if 1
+#if 0
     engine::JobSystem::Start([]() {
         std::cout << "Hello World\n";
         engine::JobCounter handle;

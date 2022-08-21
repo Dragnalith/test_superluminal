@@ -32,6 +32,9 @@
     <ClInclude Include="src\foundation\src\private\WindowManager.h">
       <Filter>private</Filter>
     </ClInclude>
+    <ClInclude Include="src\foundation\include\fnd\JobSemaphore.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src/foundation/src/private/JobSystem.cpp">
@@ -44,6 +47,9 @@
       <Filter>private</Filter>
     </ClCompile>
     <ClCompile Include="src\foundation\src\private\main.cpp">
+      <Filter>private</Filter>
+    </ClCompile>
+    <ClCompile Include="src\foundation\src\private\JobSemaphore.cpp">
       <Filter>private</Filter>
     </ClCompile>
   </ItemGroup>

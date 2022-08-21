@@ -30,8 +30,10 @@ public:
     SwapChain(RenderDevice& device);
     ~SwapChain();
 
-    ID3D12Resource* GetCurrentResource() const;
-    const D3D12_CPU_DESCRIPTOR_HANDLE& GetCurrentRenderTargetDescriptor() const;
+    uint32_t GetBufferCount() const;
+    uint32_t GetCurrentIndex() const;
+    ID3D12Resource* GetResource(int64_t index) const;
+    const D3D12_CPU_DESCRIPTOR_HANDLE& GetRenderTargetDescriptor(int64_t) const;
     HANDLE GetWaitableObject() const;
 
     void Present(uint32_t syncInterval) const;

@@ -118,14 +118,20 @@ SwapChain::~SwapChain()
     if (m_impl->descriptorHeap) { m_impl->descriptorHeap->Release(); m_impl->descriptorHeap = nullptr; }
 }
 
-ID3D12Resource* SwapChain::GetCurrentResource() const {
-    uint32_t currentIndex = m_impl->swapChain->GetCurrentBackBufferIndex();
-    return m_impl->mainRenderTargetResource[currentIndex];
+uint32_t SwapChain::GetCurrentIndex() const {
+    return m_impl->swapChain->GetCurrentBackBufferIndex();
 }
 
-const D3D12_CPU_DESCRIPTOR_HANDLE& SwapChain::GetCurrentRenderTargetDescriptor() const {
-    uint32_t currentIndex = m_impl->swapChain->GetCurrentBackBufferIndex();
-    return m_impl->mainRenderTargetDescriptor[currentIndex];
+uint32_t SwapChain::GetBufferCount() const {
+    return NUM_BACK_BUFFERS;
+}
+
+ID3D12Resource* SwapChain::GetResource(int64_t index) const {
+    return m_impl->mainRenderTargetResource[index % NUM_BACK_BUFFERS];
+}
+
+const D3D12_CPU_DESCRIPTOR_HANDLE& SwapChain::GetRenderTargetDescriptor(int64_t index) const {
+    return m_impl->mainRenderTargetDescriptor[index % NUM_BACK_BUFFERS];
 }
 
 HANDLE SwapChain::GetWaitableObject() const {

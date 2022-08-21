@@ -1,5 +1,6 @@
 // TODO
-// - frame-centric mainloop
+// - Why there is there latency during resize?
+// - Why does it crash if compile with NDEBUG? (timing or synchronization issue?)
 // - re-use fiber
 // - renderer independent from the swapchain
 // - Input independent from Win32
@@ -14,9 +15,9 @@
 #include <fw/Renderer.h>
 #include <fw/FrameData.h>
 #include <fw/DefaultFramePipeline.h>
+#include <fw/FrameManager.h>
 #include <app/Game.h>
 
-#include <Superluminal/PerformanceAPI.h>
 #include <iostream>
 
 void AppMain()
@@ -27,41 +28,7 @@ void AppMain()
     engine::Renderer renderer(renderDevice, swapChain, imguiManager);
     app::Game game;
     engine::DefaultFramePipeline pipeline(imguiManager, renderer, game);
+    engine::FrameManager frameManager(pipeline);
 
-    // Main loop
-    auto lastQuitTime = engine::Window::GetMainWindow().GetLastQuitTime();
-    engine::Clock::time_point lastFrameTime = engine::Clock::now() - std::chrono::milliseconds(16);
-    uint64_t frameIndex = 0;
-    while (lastQuitTime >= engine::Window::GetMainWindow().GetLastQuitTime())
-    {
-        engine::FrameData frameData;
-        frameData.frameIndex = frameIndex;
-        frameIndex += 1;
-        std::string frameName = std::format("Index = {}", frameIndex);
-        PERFORMANCEAPI_INSTRUMENT_DATA("Frame", frameName.c_str());
-        {
-            PERFORMANCEAPI_INSTRUMENT_DATA("Update", frameName.c_str());
-            auto now = engine::Clock::now();
-            std::chrono::duration<float> deltatime = now - lastFrameTime;
-            lastFrameTime = now;
-            frameData.deltatime = deltatime.count();
-
-            pipeline.Update(frameData);
-        }
-
-        {
-            PERFORMANCEAPI_INSTRUMENT_DATA("Render", frameName.c_str());
-            pipeline.Render(frameData); 
-        }
-
-        {
-            PERFORMANCEAPI_INSTRUMENT_DATA("Kick", frameName.c_str());
-            pipeline.Kick(frameData);
-        }
-
-        {
-            PERFORMANCEAPI_INSTRUMENT_DATA("Clean", frameName.c_str());
-            pipeline.Clean(frameData);
-        }
-    }
+    frameManager.Start();
 }
