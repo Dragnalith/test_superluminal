@@ -77,5 +77,6 @@ void DefaultFramePipeline::Kick(const FrameData& frameData) {
 }
 void DefaultFramePipeline::Clean(const FrameData& frameData) {
     m_renderer.Clean(frameData);
+    RandomWorkload(1000);
 }
 } // namespace engine

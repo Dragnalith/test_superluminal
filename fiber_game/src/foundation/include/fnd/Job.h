@@ -12,7 +12,7 @@ class JobCounter;
 
 struct Job
 {
-	static void DispatchJob(JobCounter& handle, std::function<void()> job);
+	static void Dispatch(const char* name, JobCounter& handle, std::function<void()> job);
 	static void Wait(JobCounter& handle, int64_t value, int64_t reset);
 	static void Wait(JobCounter& handle, int64_t value);
 	static void Wait(JobCounter& handle);

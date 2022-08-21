@@ -1,8 +1,14 @@
 #pragma once
 
+#include <fnd/Util.h>
+#include <fnd/Job.h>
 #include <fw/FrameData.h>
 #include <app/Game.h>
 #include <fnd/Window.h>
+
+#include <Superluminal/PerformanceAPI.h>
+
+
 namespace engine
 {
 struct FrameData;
@@ -14,8 +20,28 @@ namespace app
 Game::Game() {
     m_lastQuitTime = engine::Window::GetMainWindow().GetLastQuitTime();
 }
+
+// Create some 
+void UpdateSubPosition(int i) {
+    PERFORMANCEAPI_INSTRUMENT("UpdateSubPosition");
+
+    engine::RandomWorkload(i * 50);
+}
+void UpdatePosition(int i) {
+    UpdateSubPosition(i);
+    engine::RandomWorkload(500);
+    UpdateSubPosition(2 * i);
+}
+
 void Game::Update(engine::FrameData& frameData) 
 {
+    engine::JobCounter handle;
+    for (int i = 0; i < 10; i++) {
+        engine::Job::Dispatch("UpdatePosition Job", handle, [i] {
+            UpdatePosition(i);
+        });
+    }
+    engine::Job::Wait(handle);
     frameData.result.stop = m_lastQuitTime != engine::Window::GetMainWindow().GetLastQuitTime();
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
     if (m_show_demo_window)
@@ -58,6 +84,8 @@ void Game::Update(engine::FrameData& frameData)
     }
     frameData.fullscreen = m_fullscreen;
     frameData.vsync = m_vsync;
+
+    engine::RandomWorkload(10000); // random workload of 5ms to be visible on profiler
 }
 
 }

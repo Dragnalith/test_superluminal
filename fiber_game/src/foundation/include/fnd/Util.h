@@ -103,4 +103,6 @@ private:
     std::function<bool()> m_condition = [this] {return m_tasks.size() > 0 || m_isClosed; };
 };
 
+void RandomWorkload(int microsecond, int random_percent = 0);
+
 }

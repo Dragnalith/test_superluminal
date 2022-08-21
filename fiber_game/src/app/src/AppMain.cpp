@@ -4,6 +4,16 @@
 // - re-use fiber
 // - renderer independent from the swapchain
 // - Input independent from Win32
+//
+// Superluminal Bug:
+// - JobName does not appear
+// - Where is the "Idle" job?
+// - White is not a color available
+// - Rare crash
+//
+// Superluminal Readability
+// - Hard to visualize which job/fiber is scheduled when because
+// - Hard to understand the begin and the end of "zone"
 
 #include <imgui/imgui.h>
 

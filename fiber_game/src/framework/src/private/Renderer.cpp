@@ -13,6 +13,8 @@
 #include <windows.h>
 #include <iostream>
 
+#include <Superluminal/PerformanceAPI.h>
+
 namespace engine 
 {
 
@@ -112,7 +114,25 @@ Renderer::~Renderer()
     if (m_impl->gpuCompletionfenceEvent) { ::CloseHandle(m_impl->gpuCompletionfenceEvent); m_impl->gpuCompletionfenceEvent = nullptr; }
 }
 
+// Create some 
+void RenderOneObject(int i) {
+    PERFORMANCEAPI_INSTRUMENT("RenderOneObject");
+
+    engine::RandomWorkload(150, (i * 10) % 80);
+}
+void RenderMultipleObject(int N) {
+    PERFORMANCEAPI_INSTRUMENT("RenderMultipleObject");
+
+    engine::RandomWorkload(200);
+    for (int i = 0; i < N; i++) {
+        RenderOneObject(100);
+    }
+    engine::RandomWorkload(100);
+}
+
 void Renderer::Render(FrameData& frameData) {
+    RandomWorkload(5000); // random workload of 5ms to be visible on profiler
+
     if (m_impl->swapChain.NeedResize(frameData.width, frameData.height, frameData.fullscreen))
     {
         Job::Wait(m_impl->renderStarted);
@@ -148,6 +168,15 @@ void Renderer::Render(FrameData& frameData) {
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
     renderCtx->commandList->ResourceBarrier(1, &barrier);
     renderCtx->commandList->Close();
+
+    engine::JobCounter handle;
+    for (int i = 0; i < 15; i++) {
+        engine::Job::Dispatch("RenderObject Job", handle, [i] {
+            RenderMultipleObject(i % 3);
+        });
+    }
+    engine::Job::Wait(handle);
+
 }
 
 void Renderer::Kick(const FrameData& frameData)

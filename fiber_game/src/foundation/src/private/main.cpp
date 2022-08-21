@@ -29,6 +29,7 @@ void Window::SetCursor(void* cursor)
     ASSERT_MSG(g_windowManager != nullptr, "Error: window manager not initialized");
     g_windowManager->SetCursor(cursor);
 }
+
 }
 
 int main() {

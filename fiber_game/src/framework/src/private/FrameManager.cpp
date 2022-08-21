@@ -61,9 +61,9 @@ void FrameManager::RunFrame(int maxFrameLatency) {
     frameData.deltatime = deltatime;
     frameData.maxFrameLatency = maxFrameLatency;
 
-    PERFORMANCEAPI_INSTRUMENT_DATA("Frame", frameName.c_str());
+    PERFORMANCEAPI_INSTRUMENT_DATA_COLOR("Frame", frameName.c_str(), PERFORMANCEAPI_MAKE_COLOR(34, 30, 203));
     {
-        PERFORMANCEAPI_INSTRUMENT_DATA("Update", frameName.c_str());
+        PERFORMANCEAPI_INSTRUMENT_DATA_COLOR("Update", frameName.c_str(), PERFORMANCEAPI_MAKE_COLOR(51, 217, 21));
 
         m_pipeline.Update(frameData);
         if (!frameData.result.stop) {
@@ -73,26 +73,26 @@ void FrameManager::RunFrame(int maxFrameLatency) {
 
     {
         Job::Wait(m_renderSemaphore, frameData.frameIndex);
-        PERFORMANCEAPI_INSTRUMENT_DATA("Render", frameName.c_str());
+        PERFORMANCEAPI_INSTRUMENT_DATA_COLOR("Render", frameName.c_str(), PERFORMANCEAPI_MAKE_COLOR(238, 220, 0));
         m_pipeline.Render(frameData); 
         m_renderSemaphore.Set(frameData.frameIndex + 1);
     }
 
     {
         Job::Wait(m_kickSemaphore, frameData.frameIndex);
-        PERFORMANCEAPI_INSTRUMENT_DATA("Kick", frameName.c_str());
+        PERFORMANCEAPI_INSTRUMENT_DATA_COLOR("Kick", frameName.c_str(), PERFORMANCEAPI_MAKE_COLOR(238, 0, 60));
         m_pipeline.Kick(frameData);
         m_kickSemaphore.Set(frameData.frameIndex + 1);
     }
 
     {
-        PERFORMANCEAPI_INSTRUMENT_DATA("Clean", frameName.c_str());
+        PERFORMANCEAPI_INSTRUMENT_DATA_COLOR("Clean", frameName.c_str(), PERFORMANCEAPI_MAKE_COLOR(150, 150, 150));
         m_pipeline.Clean(frameData);
     }
     m_startSemaphore.Release();
 }
 void FrameManager::StartFrame(int frameLatency) {
-    Job::DispatchJob(m_handle, [this, frameLatency] {
+    Job::Dispatch("Frame Job", m_handle, [this, frameLatency] {
         RunFrame(frameLatency);
     });
 }
