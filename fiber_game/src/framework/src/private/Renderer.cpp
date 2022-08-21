@@ -136,12 +136,10 @@ void Renderer::Kick(const FrameData& frameData)
     m_impl->lastPresentedFrameIndex = frameData.frameIndex;
     m_impl->renderDevice.GetCommandQueue()->Signal(m_impl->gpuCompletionfence, m_impl->lastPresentedFrameIndex);
     m_impl->WaitForPresent();
-    m_impl->Free(frameData.renderContext);
 }
 
-void Renderer::WaitForPresent()
-{
-    m_impl->WaitForPresent();
+void Renderer::Clean(const FrameData& frameData) {
+    m_impl->Free(frameData.renderContext);
 }
 
 }

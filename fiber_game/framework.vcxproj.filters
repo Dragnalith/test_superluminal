@@ -31,6 +31,9 @@
     <ClCompile Include="src/framework/src/private/SwapChain.cpp">
       <Filter>private</Filter>
     </ClCompile>
+    <ClCompile Include="src\framework\src\private\DefaultFramePipeline.cpp">
+      <Filter>private</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/framework/src/private/imgui/imgui_internal.h">
@@ -68,6 +71,15 @@
     </ClInclude>
     <ClInclude Include="src/framework/include/imgui/imconfig.h">
       <Filter>include\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\framework\include\fw\IGame.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\framework\include\fw\IFramePipeline.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\framework\include\fw\DefaultFramePipeline.h">
+      <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

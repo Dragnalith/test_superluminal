@@ -11,6 +11,13 @@ struct ID3D12GraphicsCommandList;
 namespace engine
 {
 
+// This data is read of the FrameManager to change its behavior
+struct FrameUpdateResult
+{
+    bool stop = false; // Stop the FrameManager, i.e stop scheduling new frame, i.e stop the app
+    int frameLatency = 3; // Number of frame which can be interleaved at the same time
+};
+
 struct RenderContext
 {
     ID3D12CommandAllocator* CommandAllocator = nullptr;

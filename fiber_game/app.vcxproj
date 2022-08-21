@@ -78,7 +78,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ImTextureID=ImU64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>./src/lib/imgui/include;./src/foundation/include;./src/framework/include;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./src/app/include;./src/lib/imgui/include;./src/foundation/include;./src/framework/include;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -96,7 +96,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ImTextureID=ImU64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>./src/lib/imgui/include;./src/foundation/include;./src/framework/include;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./src/app/include;./src/lib/imgui/include;./src/foundation/include;./src/framework/include;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -116,7 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>ImTextureID=ImU64;NDEBUG;_CONSOLE;PERFORMANCEAPI_ENABLED=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>./src/lib/imgui/include;./src/foundation/include;./src/framework/include;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./src/app/include;./src/lib/imgui/include;./src/foundation/include;./src/framework/include;.\lib\SuperluminalApi\include;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -130,6 +130,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/app/src/main.cpp" />
+    <ClCompile Include="src\app\src\Game.cpp" />
   </ItemGroup>
   <ItemGroup>
     <!--
@@ -141,6 +142,9 @@
     <ProjectReference Include="framework.vcxproj">
       <Project>{48e1971d-99f7-421c-9e27-818d99e46ecf}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\app\include\app\Game.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

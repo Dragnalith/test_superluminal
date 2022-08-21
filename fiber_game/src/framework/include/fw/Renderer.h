@@ -22,7 +22,7 @@ public:
 
 	void Render(FrameData& frameData);
 	void Kick(const FrameData& frameData);
-	void WaitForPresent();
+	void Clean(const FrameData& frameData);
 
 private:
 	Pimpl<RendererImpl> m_impl;

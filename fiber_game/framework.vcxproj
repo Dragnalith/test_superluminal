@@ -129,6 +129,9 @@
     <ClInclude Include="src/framework/src/private/imgui/imstd_rectpack.h" />
     <ClInclude Include="src/framework/src/private/imgui/imstd_textedit.h" />
     <ClInclude Include="src/framework/src/private/imgui/imstd_truetype.h" />
+    <ClInclude Include="src\framework\include\fw\DefaultFramePipeline.h" />
+    <ClInclude Include="src\framework\include\fw\IFramePipeline.h" />
+    <ClInclude Include="src\framework\include\fw\IGame.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src/framework/src/private/DearImGuiManager.cpp" />
@@ -141,6 +144,7 @@
     <ClCompile Include="src/framework/src/private/imgui/imgui_tables.cpp" />
     <ClCompile Include="src/framework/src/private/imgui/imgui_widgets.cpp" />
     <ClCompile Include="src/framework/src/private/imgui/imgui.cpp" />
+    <ClCompile Include="src\framework\src\private\DefaultFramePipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="foundation.vcxproj">

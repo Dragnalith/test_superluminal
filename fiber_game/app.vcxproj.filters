@@ -12,5 +12,13 @@
     <ClCompile Include="src/app/src/main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\app\src\Game.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\app\include\app\Game.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
