@@ -5,8 +5,6 @@
 namespace engine
 {
 
-class WindowManager;
-class Window;
 class IGame;
 class Renderer;
 class DearImGuiManager;
@@ -18,7 +16,7 @@ class DearImGuiManager;
 class DefaultFramePipeline : public IFramePipeline
 {
 public:
-    DefaultFramePipeline(WindowManager& windowManager, Window& window, DearImGuiManager& imguiManager, Renderer& renderer, IGame& game);
+    DefaultFramePipeline(DearImGuiManager& imguiManager, Renderer& renderer, IGame& game);
 
     virtual void Update(FrameData& frameData);
     virtual void Render(FrameData& frame);
@@ -26,8 +24,6 @@ public:
     virtual void Clean(const FrameData& frameData);
 
 private:
-    WindowManager& m_windowManager;
-    Window& m_window;
     DearImGuiManager& m_imguiManager;
     Renderer& m_renderer;
     IGame& m_game;

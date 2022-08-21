@@ -117,16 +117,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src/foundation/include/fnd/JobSystem.h" />
     <ClInclude Include="src/foundation/include/fnd/SpinLock.h" />
     <ClInclude Include="src/foundation/include/fnd/Util.h" />
     <ClInclude Include="src/foundation/include/fnd/Window.h" />
-    <ClInclude Include="src/foundation/include/fnd/WindowManager.h" />
+    <ClInclude Include="src\foundation\include\fnd\AppMain.h" />
+    <ClInclude Include="src\foundation\include\fnd\Job.h" />
+    <ClInclude Include="src\foundation\src\private\JobSystem.h" />
+    <ClInclude Include="src\foundation\src\private\WindowManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src/foundation/src/private/JobSystem.cpp" />
     <ClCompile Include="src/foundation/src/private/Window.cpp" />
     <ClCompile Include="src/foundation/src/private/WindowManager.cpp" />
+    <ClCompile Include="src\foundation\src\private\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

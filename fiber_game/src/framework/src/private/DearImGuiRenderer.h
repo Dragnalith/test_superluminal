@@ -2,7 +2,6 @@
 
 #include <fnd/Util.h>
 #include <fnd/Window.h>
-#include <fnd/WindowManager.h>
 #include <fw/FrameData.h>
 
 struct ID3D12GraphicsCommandList;

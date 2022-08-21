@@ -1,13 +1,17 @@
-#include <fnd/JobSystem.h>
+#include <private/JobSystem.h>
 
-#include <windows.h>
+#include <fnd/Job.h>
+#include <fnd/Util.h>
+#include <fnd/SpinLock.h>
 
 #include <Superluminal/PerformanceAPI.h>
+
+#include <windows.h>
 #include <format>
 #include <optional>
 #include <vector>
 #include <iostream>
-
+#include <deque>
 namespace engine
 {
 
@@ -187,20 +191,20 @@ private:
 };
 
 
-void JobSystem::YieldJob() 
+void YieldJob() 
 {
     ASSERT_MSG(g_threadFiber != nullptr, "Yield can only be called from a job");
     ::SwitchToFiber(g_threadFiber);
 }
 
-void JobSystem::Wait(const JobHandle& handle) {
+void Wait(const JobHandle& handle) {
     ASSERT_MSG(g_threadWorker != nullptr, "Wait can only be called from a worker");
     g_threadWorker->SetWaitingHandle(handle);
     YieldJob();
 }
 
 
-void JobSystem::DispatchJob(JobHandle& handle, std::function<void()> mainJob) {
+void DispatchJob(JobHandle& handle, std::function<void()> mainJob) {
     ASSERT_MSG(g_jobQueue != nullptr, "DispatchJob can only be called from a worker");
     g_jobQueue->Create(handle, mainJob);
 }
@@ -210,7 +214,7 @@ void JobSystem::Start(std::function<void()> mainJob) {
     JobHandle handle;
     jobQueue.Create(handle, mainJob);
 
-    constexpr int N = 2;
+    constexpr int N = 4;
     std::vector<std::unique_ptr<JobWorker>> workers;
     for (int i = 0; i < N; i++) {
         workers.push_back(std::make_unique<JobWorker>(jobQueue, i));

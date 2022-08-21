@@ -42,10 +42,10 @@ struct SwapChainImpl
 
 
 
-SwapChain::SwapChain(RenderDevice& device, Window& window)
+SwapChain::SwapChain(RenderDevice& device)
     : m_impl(device)
 {
-    window.GetSize(&m_impl->width, &m_impl->height);
+    Window::GetMainWindow().GetSize(&m_impl->width, &m_impl->height);
     HRESULT result = S_OK;
 
     {
@@ -91,11 +91,11 @@ SwapChain::SwapChain(RenderDevice& device, Window& window)
         result = CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory));
         ASSERT_MSG(result == S_OK, "DXGI Factory creation failed");
 
-        result = dxgiFactory->CreateSwapChainForHwnd(device.GetCommandQueue(), window.GetHandle(), &sd, NULL, NULL, &swapChain1);
+        result = dxgiFactory->CreateSwapChainForHwnd(device.GetCommandQueue(), Window::GetMainWindow().GetHandle(), &sd, NULL, NULL, &swapChain1);
         ASSERT_MSG(result == S_OK, "CreateSwapChainForHwnd failed");
         result = swapChain1->QueryInterface(IID_PPV_ARGS(&m_impl->swapChain));
         ASSERT_MSG(result == S_OK, "SwapChain QueryInterface failed");
-        result = dxgiFactory->MakeWindowAssociation(window.GetHandle(), DXGI_MWA_NO_WINDOW_CHANGES);
+        result = dxgiFactory->MakeWindowAssociation(Window::GetMainWindow().GetHandle(), DXGI_MWA_NO_WINDOW_CHANGES);
         ASSERT_MSG(result == S_OK, "Failed to make swapchain window assocation");
 
         swapChain1->Release();

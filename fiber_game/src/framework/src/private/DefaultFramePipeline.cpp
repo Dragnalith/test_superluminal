@@ -41,10 +41,8 @@ void CopyImDrawData(const ImDrawData* fromData, engine::FrameData* frameData) {
 }
 
 
-DefaultFramePipeline::DefaultFramePipeline(WindowManager& windowManager, Window& window, DearImGuiManager& imguiManager, Renderer& renderer, IGame& game) 
-    : m_windowManager(windowManager)
-    , m_window(window)
-    , m_imguiManager(imguiManager)
+DefaultFramePipeline::DefaultFramePipeline(DearImGuiManager& imguiManager, Renderer& renderer, IGame& game) 
+    : m_imguiManager(imguiManager)
     , m_renderer(renderer)
     , m_game(game)
 {
@@ -52,15 +50,15 @@ DefaultFramePipeline::DefaultFramePipeline(WindowManager& windowManager, Window&
 }
 void DefaultFramePipeline::Update(FrameData& frameData) {
     // UPDATE
-    m_window.GetSize(&frameData.width, &frameData.height);
+    Window::GetMainWindow().GetSize(&frameData.width, &frameData.height);
 
     // Update ImGUI
-    for (auto& msg : m_window.PopMsg()) {
+    for (auto& msg : Window::GetMainWindow().PopMsg()) {
         m_imguiManager.WndProcHandler(msg.hWnd, msg.msg, msg.wParam, msg.lParam);
     }
 
     // Start the Dear ImGui frame
-    m_imguiManager.Update(m_windowManager, m_window, frameData.deltatime);
+    m_imguiManager.Update(frameData.deltatime);
 
     // GAME
     m_game.Update(frameData);

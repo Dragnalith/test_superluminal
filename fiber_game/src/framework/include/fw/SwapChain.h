@@ -27,7 +27,7 @@ struct SwapChainImpl;
 class SwapChain
 {
 public:
-    SwapChain(RenderDevice& device, Window& window);
+    SwapChain(RenderDevice& device);
     ~SwapChain();
 
     ID3D12Resource* GetCurrentResource() const;

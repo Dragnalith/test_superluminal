@@ -129,7 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src/app/src/main.cpp" />
+    <ClCompile Include="src\app\src\AppMain.cpp" />
     <ClCompile Include="src\app\src\Game.cpp" />
   </ItemGroup>
   <ItemGroup>

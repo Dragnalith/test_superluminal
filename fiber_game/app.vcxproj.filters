@@ -9,7 +9,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src/app/src/main.cpp">
+    <ClCompile Include="src\app\src\AppMain.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\app\src\Game.cpp">

@@ -11,20 +11,26 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src/foundation/include/fnd/JobSystem.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src/foundation/include/fnd/Util.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="src/foundation/include/fnd/Window.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="src/foundation/include/fnd/WindowManager.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="src/foundation/include/fnd/SpinLock.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\foundation\include\fnd\Job.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\foundation\include\fnd\AppMain.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="src\foundation\src\private\JobSystem.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="src\foundation\src\private\WindowManager.h">
+      <Filter>private</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -35,6 +41,9 @@
       <Filter>private</Filter>
     </ClCompile>
     <ClCompile Include="src/foundation/src/private/WindowManager.cpp">
+      <Filter>private</Filter>
+    </ClCompile>
+    <ClCompile Include="src\foundation\src\private\main.cpp">
       <Filter>private</Filter>
     </ClCompile>
   </ItemGroup>

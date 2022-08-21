@@ -42,12 +42,12 @@ DearImGuiManager::~DearImGuiManager() {
     ImGui::DestroyContext();
 }
 
-void DearImGuiManager::Update(WindowManager& windowManager, Window& window, float deltatime) {
+void DearImGuiManager::Update(float deltatime) {
     ImGuiIO& io = ImGui::GetIO();
 
     // Setup display size (every frame to accommodate for window resizing)
     RECT rect = { 0, 0, 0, 0 };
-    ::GetClientRect(window.GetHandle(), &rect);
+    ::GetClientRect(Window::GetMainWindow().GetHandle(), &rect);
     io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
 
     // Setup time step
@@ -86,7 +86,7 @@ void DearImGuiManager::Update(WindowManager& windowManager, Window& window, floa
         if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
         {
             // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-            windowManager.SetCursor(NULL);
+            Window::SetCursor(NULL);
         }
         else
         {
@@ -104,7 +104,7 @@ void DearImGuiManager::Update(WindowManager& windowManager, Window& window, floa
             case ImGuiMouseCursor_Hand:         win32_cursor = IDC_HAND; break;
             case ImGuiMouseCursor_NotAllowed:   win32_cursor = IDC_NO; break;
             }
-            windowManager.SetCursor(::LoadCursor(NULL, win32_cursor));
+            Window::SetCursor(::LoadCursor(NULL, win32_cursor));
         }
     }
 

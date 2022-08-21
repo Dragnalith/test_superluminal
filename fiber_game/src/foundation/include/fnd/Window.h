@@ -22,6 +22,9 @@ struct WindowMsg {
 class Window
 {
 public:
+    static Window& GetMainWindow();
+    static void SetCursor(void* cursor);
+
     Window(HWND hwnd, int w, int h);
 
     auto GetHandle() const { return m_hwnd; };
