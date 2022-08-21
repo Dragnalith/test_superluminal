@@ -1,7 +1,8 @@
 cpp_fiber/x64/
 tracy_fiber_test/x64/
-game_engine_with_fibers/x64/
-game_engine_with_fibers/imgui.ini
+fiber_game/x64/
+fiber_game/bin/
+fiber_game/imgui.ini
 .vs/
 bin/
 obj/
