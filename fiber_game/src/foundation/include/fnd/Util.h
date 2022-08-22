@@ -73,13 +73,13 @@ public:
 
     void Wait() {
         std::unique_lock<std::mutex> lock(m_mutex);
-        m_cv.wait(m_mutex, m_condition);
+        m_cv.wait(lock, m_condition);
     }
 
     template< class Rep, class Period >
     bool WaitFor(const std::chrono::duration<Rep, Period>& rel_time) {
         std::unique_lock<std::mutex> lock(m_mutex);
-        return m_cv.wait_for(m_mutex, rel_time, m_condition());
+        return m_cv.wait_for(lock, rel_time, m_condition());
     }
 
     template<class Clock, class Duration>

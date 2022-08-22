@@ -31,7 +31,14 @@ struct RendererImpl {
         , swapChain(sc)
         , imguiRenderer(device, manager)
         , nextBackBufferIndex(sc.GetCurrentIndex())
+        , thread([this] { ThreadFunc(); })
+
     {}
+
+    ~RendererImpl()
+    {
+        taskQueue.Close();
+    }
 
     RenderDevice& renderDevice;
     SwapChain& swapChain;
@@ -44,6 +51,19 @@ struct RendererImpl {
     uint64_t fenceLastSignaledValue = 0;
     uint32_t nextBackBufferIndex;
     JobCounter renderStarted;
+    TaskQueue<std::function<void()>> taskQueue;
+    std::jthread thread;
+
+    void ThreadFunc() {
+        PROFILE_SET_THREADNAME("GPU Kick");
+
+        while (!taskQueue.IsClosed()) {
+            for (auto& task : taskQueue.PopAll()) {
+                task();
+            }
+            taskQueue.Wait();
+        }
+    }
     uint32_t AllocateBackBufferIndex() {
         uint32_t index = nextBackBufferIndex;
         nextBackBufferIndex = (nextBackBufferIndex + 1) % swapChain.GetBufferCount();
@@ -188,7 +208,16 @@ void Renderer::Kick(const FrameData& frameData)
     m_impl->lastPresentedFrameIndex = frameData.frameIndex;
     m_impl->renderDevice.GetCommandQueue()->Signal(m_impl->gpuCompletionfence, m_impl->lastPresentedFrameIndex);
     m_impl->Free(frameData.renderContext);
-    m_impl->WaitForPresent();
+    
+    JobCounter mutex;
+    mutex.Set(1);
+    
+    m_impl->taskQueue.Push([this, &mutex] {
+        PROFILE_SCOPE("WaitForPresent");
+        m_impl->WaitForPresent();
+        mutex.Set(0);
+    });
+    Job::Wait(mutex);
     PROFILE_FRAME("GPU Present");
     m_impl->renderStarted.Sub(1);
 
