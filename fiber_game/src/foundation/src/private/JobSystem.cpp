@@ -374,7 +374,7 @@ void JobSystem::Start(std::function<void()> mainJob) {
     
     jobQueue.Dispatch("Starting Job", handle, mainJob);
 
-    constexpr int N = 3;
+    constexpr int N = 4;
     std::vector<std::unique_ptr<JobWorker>> workers;
     for (int i = 0; i < N; i++) {
         workers.push_back(std::make_unique<JobWorker>(jobQueue, i));

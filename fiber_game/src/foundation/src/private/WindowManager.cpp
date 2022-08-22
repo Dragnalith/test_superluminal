@@ -4,6 +4,7 @@
 
 #include <fnd/Util.h>
 #include <fnd/Window.h>
+#include <fnd/Profiler.h>
 
 #include <windows.h>
 #include <windowsx.h> // GET_X_LPARAM(), GET_Y_LPARAM()
@@ -159,6 +160,7 @@ struct WindowManagerImpl {
     }
 
     void ThreadFunc() {
+        PROFILE_SET_THREADNAME("Window Manager");
         // Create application window
         ::RegisterClassExA(&wc);
 

@@ -1,8 +1,5 @@
 #pragma once
 
-#define SUPERLUMINAL_PROFILER_ENABLED 1
-#define TRACY_PROFILER_ENABLED 0
-
 #if SUPERLUMINAL_PROFILER_ENABLED
 
 #include <Superluminal/PerformanceAPI.h>
@@ -50,8 +47,8 @@
 #define PROFILE_SCOPE_DATA_COLOR(ID, data, r, g, b)
 #define PROFILE_JOB_NAME(name)
 
-#define PROFILE_DEFAULT_FRAME FrameMark
-#define PROFILE_FRAME(name) FrameMarkNamed(name)
+#define PROFILE_DEFAULT_FRAME
+#define PROFILE_FRAME(name)
 
 #define PROFILE_REGISTER_FIBER(Fiber, Name)
 #define PROFILE_UNREGISTER_FIBER(Fiber, Name)
