@@ -157,7 +157,17 @@ public:
         return m_jobTotalNumber.load();
     }
 
-    void Create(const char* name, JobCounter& handle, std::function<void()> mainJob) {
+
+    void ScheduleFiber() {
+        std::scoped_lock<SpinLock> lock(m_jobLock);
+
+        if (m_jobs.size() > 0) {
+            JobDesc desc = m_jobs.front();
+            m_jobs.pop_front();
+            Create(desc);
+        }
+    }
+    void Create(const JobDesc& jobDesc) {
         std::unique_ptr<FiberJob> job;
         int64_t value = m_jobTotalNumber.fetch_add(1);
         ASSERT_MSG(value >= 0, "job count issue when increment");
@@ -176,7 +186,7 @@ public:
                 ASSERT_MSG(beforeSize == afterSize + 1, "Problem of free fiber pop");
             }
         }
-        job->SetJob(JobDesc(name, &handle, mainJob));
+        job->SetJob(jobDesc);
         Push(std::move(job));
     }
 
@@ -227,13 +237,18 @@ public:
         m_queue.push_back(std::move(job));
     }
 
+    void EnqueueJob(const JobDesc& jobDesc) {
+        std::scoped_lock<SpinLock> lock(m_jobLock);
+        m_jobs.push_back(jobDesc);
+    }
+
 private:
     mutable SpinLock m_jobLock;
     mutable SpinLock m_fiberQueueLock;
     mutable SpinLock m_freeFiberLock;
     std::deque<std::unique_ptr<FiberJob>> m_queue;
     std::deque<std::unique_ptr<FiberJob>> m_freeFiber;
-    std::deque<Job> m_jobs;
+    std::deque<JobDesc> m_jobs;
     std::vector<FiberJob> m_job;
     std::atomic<int64_t> m_jobTotalNumber = 0;
 };
@@ -323,15 +338,17 @@ void Job::Wait(JobCounter& handle, int64_t value, int64_t reset, const std::sour
 }
 
 
-void Job::Dispatch(const char* name, JobCounter& handle, std::function<void()> mainJob) {
+void Job::Dispatch(const char* name, JobCounter& handle, std::function<void()> func) {
     ASSERT_MSG(g_jobQueue != nullptr, "DispatchJob can only be called from a worker");
-    g_jobQueue->Create(name, handle, mainJob);
+
+    g_jobQueue->EnqueueJob(JobDesc(name, &handle, func));
+    g_jobQueue->ScheduleFiber();
 }
 
 void JobSystem::Start(std::function<void()> mainJob) {
     JobQueue jobQueue;
     JobCounter handle;
-    jobQueue.Create("Main Job", handle, mainJob);
+    jobQueue.Create(JobDesc("Main Job", &handle, mainJob));
 
     constexpr int N = 3;
     std::vector<std::unique_ptr<JobWorker>> workers;
