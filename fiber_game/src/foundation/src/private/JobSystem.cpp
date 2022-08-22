@@ -143,6 +143,7 @@ public:
 
     ~JobQueue() {
         ASSERT_MSG(m_jobTotalNumber.load() == 0, "Problem: job remain after the queue is destroyed");
+        std::cout << "Number of allocated fiber: " << m_freeFiber.size() << "\n";
     }
 
     size_t Size() const {
@@ -246,7 +247,6 @@ public:
 
     void Dispatch(const char* name, JobCounter& handle, std::function<void()> func) {
         EnqueueJob(JobDesc(name, &handle, func));
-        ScheduleFiber();
     }
 
 private:
@@ -311,6 +311,9 @@ private:
                     else {
                         m_jobQueue.Release(std::move(job));
                     }
+                }
+                else {
+                    m_jobQueue.ScheduleFiber();
                 }
             }
         }
