@@ -27,6 +27,18 @@ namespace {
     thread_local JobQueue* g_jobQueue = nullptr;
 }
 
+struct JobDesc {
+    JobDesc() = default;
+    JobDesc(const char* name, JobCounter* handle, const std::function<void()>& func) {
+        m_name = name;
+        m_handle = handle;
+        m_delegate = func;
+    }
+    const char* m_name = nullptr;
+    JobCounter* m_handle = nullptr;
+    std::function<void()> m_delegate;
+};
+
 class FiberJob {
     friend class JobQueue;
 public:
@@ -42,15 +54,13 @@ public:
         ASSERT_MSG(m_fiber != nullptr, "Fiber creation has failed");
     }
 
-    void SetJob(const char* name, JobCounter* handle, const std::function<void()>& func)
+    void SetJob(const JobDesc& job)
     {
         ASSERT_MSG(IsDone(), "Job is not done");
-        m_name = name;
-        m_handle = handle;
-        m_delegate = func;
+        m_job = job;
         AssertValid();
         {
-            int64_t value = m_handle->m_counter.fetch_add(1);
+            int64_t value = m_job.m_handle->m_counter.fetch_add(1);
             ASSERT_MSG(value >= 0, "handle issue when increment");
         }
     }
@@ -67,14 +77,12 @@ public:
             //__debugbreak();
         }
         {
-            const char* name = m_name;
+            const char* name = m_job.m_name;
             PERFORMANCEAPI_INSTRUMENT_COLOR(name, PERFORMANCEAPI_MAKE_COLOR(254, 254, 254));
-            m_delegate();
+            m_job.m_delegate();
         }
-        JobCounter* handle = m_handle;
-        m_name = nullptr;
-        m_handle = nullptr;
-        m_delegate = nullptr;
+        JobCounter* handle = m_job.m_handle;
+        m_job = JobDesc();
         ASSERT_MSG(handle != nullptr, "Handle is null");
         int64_t value = handle->m_counter.fetch_sub(1);
         ASSERT_MSG(value > 0, "handle issue when decrement");
@@ -103,33 +111,30 @@ public:
 
     void* GetFiberHandle() { return m_fiber; }
     void AssertValid() {
-        ASSERT_MSG(m_handle == nullptr || m_handle->m_test == 0xdeadbeef, "invalid handle");
+        ASSERT_MSG(m_job.m_handle == nullptr || m_job.m_handle->m_test == 0xdeadbeef, "invalid handle");
     }
     bool IsDone() const { 
-        if (m_name == nullptr) {
-            ASSERT_MSG(!m_delegate, "delegate is not empty");
-            ASSERT_MSG(m_handle == nullptr, "handle is not null");
+        if (m_job.m_name == nullptr) {
+            ASSERT_MSG(!m_job.m_delegate, "delegate is not empty");
+            ASSERT_MSG(m_job.m_handle == nullptr, "handle is not null");
             return true;
         }
         else {
-            ASSERT_MSG(m_delegate, "delegate is empty");
-            ASSERT_MSG(m_handle != nullptr, "handle is null");
+            ASSERT_MSG(m_job.m_delegate, "delegate is empty");
+            ASSERT_MSG(m_job.m_handle != nullptr, "handle is null");
             return false;
         }
     }
 
 protected:
-    const char* m_name = nullptr;
-    JobCounter* m_handle = nullptr;
+    JobDesc m_job;
     void* m_fiber = nullptr;
-    std::function<void()> m_delegate;
     JobCounter* m_waitingHandle = nullptr;
     int64_t m_waitedValue = -1;
     int64_t m_resetValue = -1;
     std::source_location m_location;
     int64_t m_useCount = 0;
 };
-
 
 class JobQueue
 {
@@ -145,7 +150,7 @@ public:
     }
 
     size_t Size() const {
-        std::scoped_lock<SpinLock> lock(m_stackLock);
+        std::scoped_lock<SpinLock> lock(m_fiberQueueLock);
         return m_queue.size();
     }
     int64_t RemainingJobCount() const {
@@ -157,7 +162,7 @@ public:
         int64_t value = m_jobTotalNumber.fetch_add(1);
         ASSERT_MSG(value >= 0, "job count issue when increment");
         {
-            std::scoped_lock<SpinLock> lock(m_stackLock);
+            std::scoped_lock<SpinLock> lock(m_freeFiberLock);
 
             if (m_freeFiber.size() == 0) {
                 m_freeFiber.push_back(std::make_unique<FiberJob>());
@@ -171,13 +176,13 @@ public:
                 ASSERT_MSG(beforeSize == afterSize + 1, "Problem of free fiber pop");
             }
         }
-        job->SetJob(name, &handle, mainJob);
+        job->SetJob(JobDesc(name, &handle, mainJob));
         Push(std::move(job));
     }
 
     void Release(std::unique_ptr<FiberJob>&& job) {
         {
-            std::scoped_lock<SpinLock> lock(m_stackLock);
+            std::scoped_lock<SpinLock> lock(m_freeFiberLock);
             m_freeFiber.push_back(std::move(job));
         }
 
@@ -185,7 +190,7 @@ public:
         ASSERT_MSG(value > 0, "job count issue when decrement");
     }
     std::unique_ptr<FiberJob> Pop() {
-        std::scoped_lock<SpinLock> lock(m_stackLock);
+        std::scoped_lock<SpinLock> lock(m_fiberQueueLock);
 
         for (auto it = m_queue.begin(); it != m_queue.end(); it++) {
             (*it)->AssertValid();
@@ -218,15 +223,18 @@ public:
     void Push(std::unique_ptr<FiberJob>&& job) {
         job->AssertValid();
 
-        std::scoped_lock<SpinLock> lock(m_stackLock);
+        std::scoped_lock<SpinLock> lock(m_fiberQueueLock);
         m_queue.push_back(std::move(job));
     }
 
 private:
+    mutable SpinLock m_jobLock;
+    mutable SpinLock m_fiberQueueLock;
+    mutable SpinLock m_freeFiberLock;
     std::deque<std::unique_ptr<FiberJob>> m_queue;
     std::deque<std::unique_ptr<FiberJob>> m_freeFiber;
+    std::deque<Job> m_jobs;
     std::vector<FiberJob> m_job;
-    mutable SpinLock m_stackLock;
     std::atomic<int64_t> m_jobTotalNumber = 0;
 };
 
@@ -293,7 +301,6 @@ private:
     int m_index;
     std::thread m_thread;
 };
-
 
 void Job::YieldJob() 
 {
