@@ -137,9 +137,7 @@ There's much more Tracy can do, which can be explored by carefully reading this 
 \section{A quick look at Tracy Profiler}
 \label{quicklook}
 
-Tracy is a real-time, nanosecond resolution \emph{hybrid frame and sampling profiler} that can you can use for remote or
-embedded telemetry of games and other applications. It can profile CPU (C, C++11, Lua), GPU (OpenGL, Vulkan, Direct3D
-11/12, OpenCL) and memory. It also can monitor locks held by threads and show where contention does happen.
+Tracy is a real-time, nanosecond resolution \emph{hybrid frame and sampling profiler} that can you can use for remote or embedded telemetry of games and other applications. It can profile CPU\footnote{Direct support is provided for C, C++, and Lua integration. At the same time, third-party bindings to many other languages exist on the internet, such as Rust, Zig, OCaml, Odin, etc.}, GPU\footnote{All major graphic APIs: OpenGL, Vulkan, Direct3D 11/12, OpenCL.}, memory allocations, locks, context switches, automatically attribute screenshots to captured frames, and much more.
 
 While Tracy can perform statistical analysis of sampled call stack data, just like other \emph{statistical profilers} (such as VTune, perf, or Very Sleepy), it mainly focuses on manual markup of the source code. Such markup allows frame-by-frame inspection of the program execution. For example, you will be able to see exactly which functions are called, how much time they require, and how they interact with each other in a multi-threaded environment. In contrast, the statistical analysis may show you the hot spots in your code, but it cannot accurately pinpoint the underlying cause for semi-random frame stutter that may occur every couple of seconds.
 
@@ -604,6 +602,7 @@ When using Tracy Profiler, keep in mind the following requirements:
 \begin{itemize}
 \item The application may use each lock in no more than 64 unique threads.
 \item There can be no more than 65534 unique source locations\footnote{A source location is a place in the code, which is identified by source file name and line number, for example, when you markup a zone.}. This number is further split in half between native code source locations and dynamic source locations (for example, when Lua instrumentation is used).
+\item If there are recursive zones at any point in a zone stack, each unique zone source location should not appear more than 255 times.
 \item Profiling session cannot be longer than 1.6 days ($2^{47}$ \si{\nano\second}). This also includes on-demand sessions.
 \item No more than 4 billion ($2^{32}$) memory free events may be recorded.
 \item No more than 16 million ($2^{24}$) unique call stacks can be captured.
@@ -749,16 +748,18 @@ There are two ways you can run \texttt{vcpkg} to install the dependencies for Tr
 vcpkg\install_vcpkg_dependencies.bat
 \end{lstlisting}
 This writes files only to the \texttt{vcpkg\textbackslash{}vcpkg} directory and makes no other changes on your machine.
-\item System-wide installation -- install \texttt{vcpkg} by following the instructions on its website, and then execute the following commands:
+\item System-wide installation with Manifest mode -- install \texttt{vcpkg} by following the instructions on its website, make sure that the environment variable \texttt{VCPKG\_ROOT} is set to the path where you have clone the repository, and then execute the following command:
 \begin{lstlisting}[language=sh]
 vcpkg integrate install
-vcpkg install --triplet x64-windows-static freetype glfw3 capstone[arm,arm64,x86]
 \end{lstlisting}
+After this step, you can use any Visual Studio project files to build as usual.
+Dependencies will be installed automatically based on vcpkg manifest listing (the \texttt{vcpkg.json} file at repository root).
+For more information about vcpkg manifest mode in Visual Studio, you can read more details at the following address: \url{https://vcpkg.io/en/docs/users/manifests.html#msbuild-integration}.
 \end{itemize}
 
 \paragraph{Unix}
 
-On Unix systems you will need to install the \texttt{pkg-config} utility and the following libraries: \texttt{glfw}, \texttt{freetype}, \texttt{capstone}, \texttt{dbus}. Some Linux distributions will require you to add a \texttt{lib} prefix and a \texttt{-dev}, or \texttt{-devel} postfix to library names. You may also need to add a seemingly random number to the library name (for example: \texttt{freetype2}, or \texttt{freetype6}). Be aware that your package manager might distribute the deprecated \texttt{master}-branch version of \texttt{capstone}, and a build from source from the \texttt{next}-branch might be necesarry for you. Have fun!
+On Unix systems you will need to install the \texttt{pkg-config} utility and the following libraries: \texttt{glfw}, \texttt{freetype}, \texttt{capstone}, \texttt{dbus}. Some Linux distributions will require you to add a \texttt{lib} prefix and a \texttt{-dev}, or \texttt{-devel} postfix to library names. You may also need to add a seemingly random number to the library name (for example: \texttt{freetype2}, or \texttt{freetype6}). Be aware that your package manager might distribute the deprecated \texttt{master}-branch version of \texttt{capstone}, and a build from source from the \texttt{next}-branch might be necessary for you. Have fun!
 
 In addition to the beforementioned libraries, you might also have to install the \texttt{tbb} library\footnote{Technically this is not a dependency of Tracy but rather of \texttt{libstdc++} but it may still not be installed by default.}.
 
@@ -803,7 +804,7 @@ Tracy will try to capture thread names through operating system data if context 
 
 On selected platforms (see section~\ref{featurematrix}) Tracy will intercept application crashes\footnote{For example, invalid memory accesses ('segmentation faults', 'null pointer exceptions'), divisions by zero, etc.}. This serves two purposes. First, the client application will be able to send the remaining profiling data to the server. Second, the server will receive a crash report with the crash reason, call stack at the time of the crash, etc.
 
-This is an automatic process, and it doesn't require user interaction.
+This is an automatic process, and it doesn't require user interaction. If you are experiencing issues with crash handling you may want to try defining the \texttt{TRACY\_NO\_CRASH\_HANDLER} macro to disable the built in crash handling.
 
 \begin{bclogo}[
 noborder=true,
@@ -1646,9 +1647,28 @@ You will also need to setup proper dependencies, by setting the following input 
 
 \paragraph{External libraries}
 
-You may also be interested in symbols from external libraries, especially if you have sampling profiling enabled (section~\ref{sampling}). In MSVC you can retrieve such symbols by going to \menu[,]{Tools,Options,Debugging,Symbols} and selecting appropriate \emph{Symbol file (.pdb) location} servers. Note that additional symbols may significantly increase application startup times.
+You may also be interested in symbols from external libraries, especially if you have sampling profiling enabled (section~\ref{sampling}).
+
+\subparagraph{Windows}
+
+In MSVC you can retrieve such symbols by going to \menu[,]{Tools,Options,Debugging,Symbols} and selecting appropriate \emph{Symbol file (.pdb) location} servers. Note that additional symbols may significantly increase application startup times.
 
 Libraries built with vcpkg typically provide PDB symbol files, even for release builds. Using vcpkg to obtain libraries has the extra benefit that everything is built using local source files, which allows Tracy to provide a source view not only of your application but also the libraries you use.
+
+\subparagraph{Unix}
+
+On Linux\footnote{And possibly other systems, if they decide to adapt the required tooling.} information needed for debugging traditionally has been provided by special packages named \texttt{debuginfo}, \texttt{dbgsym}, or similar. You can use them to retrieve symbols, but keep in mind the following:
+
+\begin{enumerate}
+\item Your distribution has to provide such packages. Not each one does.
+\item Debug packages are usually stored in a separate repository, which you must manually enable.
+\item You need to install a separate package for each library you want to have symbols for.
+\item Debugging information can require large amounts of disk space.
+\end{enumerate}
+
+A modern alternative to installing static debug packages is to use the \emph{debuginfod} system, which performs on-demand delivery of debugging information across the internet. See \url{https://sourceware.org/elfutils/Debuginfod.html} for more details. Since this new method of symbol delivery is not yet universally supported, you will have to manually enable it, both in your system and in Tracy.
+
+First, make sure your distribution maintains a debuginfod server. Then, install the debuginfod library. You also need to ensure you have appropriately configured which server to access, but distribution maintainers usually provide this. Next, add the \texttt{TRACY\_DEBUGINFOD} define to the program you want to profile and link it with \texttt{libdebuginfod}. This will enable network symbol delivery.
 
 \paragraph{Using the dbghelp library on Windows}
 
@@ -3266,7 +3286,7 @@ Each tree node consists of the function name, the source file location, and the 
 
 The \emph{Group by function name} option controls how tree nodes are grouped. If it is disabled, the grouping is performed at a machine instruction-level granularity. This may result in a very verbose output, but the displayed source locations are precise. To make the tree more readable, you may opt to perform grouping at the function name level, which will result in less valid source file locations, as multiple entries are collapsed into one.
 
-Enabling the \emph{Only active allocations} option will limit the call stack tree only to display active allocations.
+Enabling the \emph{Only active allocations} option will limit the call stack tree only to display active allocations. Enabling \emph{Only inactive allocations} option will have similar effect for inactive allocations. Both are mutually exclusive, enabling one disables the other. Displaing inactive allocations, when combined with \emph{Limit range}, will show short lived allocatios highlighting potentially unwanted behavior in the code.
 
 Clicking the \RMB{}~right mouse button on the function name will open the allocations list window (see section \ref{alloclist}), which lists all the allocations included at the current call stack tree level. Likewise, clicking the \RMB{}~right mouse button on the source file location will open the source file view window (if applicable, see section~\ref{sourceview}).
 
