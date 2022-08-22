@@ -4,7 +4,7 @@
 #include <fnd/Util.h>
 #include <fnd/SpinLock.h>
 
-#include <Superluminal/PerformanceAPI.h>
+#include <fnd/Profiler.h>
 
 #include <windows.h>
 #include <format>
@@ -12,8 +12,6 @@
 #include <vector>
 #include <iostream>
 #include <deque>
-
-#define SWITCH_TO_FIBER(Fiber) PerformanceAPI_BeginFiberSwitch((uint64_t)::GetCurrentFiber(), (uint64_t)(Fiber)); ::SwitchToFiber((Fiber)); PerformanceAPI_EndFiberSwitch((uint64_t)::GetCurrentFiber());
 
 namespace engine
 {
@@ -74,7 +72,7 @@ public:
         }
         {
             const char* name = m_job.m_name;
-            PERFORMANCEAPI_INSTRUMENT_COLOR(name, PERFORMANCEAPI_MAKE_COLOR(254, 254, 254));
+            PROFILE_SCOPE_COLOR(name, 254, 254, 254);
             m_job.m_delegate();
         }
         JobCounter* handle = m_job.m_handle;
@@ -84,7 +82,7 @@ public:
         ASSERT_MSG(value > 0, "handle issue when decrement");
     }
     static void FiberFunc(void* data) {
-        PerformanceAPI_RegisterFiber((uint64_t)GetCurrentFiber());
+        PROFILE_REGISTER_FIBER(GetCurrentFiber());
         FiberJob* fiberJob = reinterpret_cast<FiberJob*>(data);
 
         while(true)
@@ -94,7 +92,7 @@ public:
             SWITCH_TO_FIBER(g_threadFiber);
         }
 
-        PerformanceAPI_UnregisterFiber((uint64_t)GetCurrentFiber());
+        PROFILE_UNREGISTER_FIBER(GetCurrentFiber());
         SWITCH_TO_FIBER(g_threadFiber);
     }
 
@@ -288,15 +286,15 @@ public:
     }
 private:
     void ThreadFunc() {
-        PerformanceAPI_SetCurrentThreadName(std::format("JobWorker - {}", m_index).c_str());
+        PROFILE_SET_THREADNAME(std::format("JobWorker - {}", m_index).c_str());
 
         g_threadFiber = ::ConvertThreadToFiber(nullptr);
-        PerformanceAPI_RegisterFiber((uint64_t)GetCurrentFiber());
+        PROFILE_REGISTER_FIBER(GetCurrentFiber());
         g_threadWorker = this;
         g_jobQueue = &m_jobQueue;
 
         {
-            PERFORMANCEAPI_INSTRUMENT_COLOR("Idle", PERFORMANCEAPI_MAKE_COLOR(163, 73, 164));
+            PROFILE_SCOPE_COLOR("Idle", 163, 73, 164);
 
             while (m_jobQueue.RemainingJobCount() > 0) {
                 std::unique_ptr<FiberJob> job = m_jobQueue.Pop();
@@ -317,7 +315,7 @@ private:
                 }
             }
         }
-        PerformanceAPI_UnregisterFiber((uint64_t)GetCurrentFiber());
+        PROFILE_UNREGISTER_FIBER(GetCurrentFiber());
         ::ConvertFiberToThread();
     }
 

@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <iostream>
 
-#include <Superluminal/PerformanceAPI.h>
+#include <fnd/Profiler.h>
 
 namespace engine 
 {
@@ -116,12 +116,12 @@ Renderer::~Renderer()
 
 // Create some 
 void RenderOneObject(int i) {
-    PERFORMANCEAPI_INSTRUMENT("RenderOneObject");
+    PROFILE_SCOPE("RenderOneObject");
 
     engine::RandomWorkload(150, (i * 10) % 80);
 }
 void RenderMultipleObject(int N) {
-    PERFORMANCEAPI_INSTRUMENT("RenderMultipleObject");
+    PROFILE_SCOPE("RenderMultipleObject");
 
     engine::RandomWorkload(200);
     for (int i = 0; i < N; i++) {

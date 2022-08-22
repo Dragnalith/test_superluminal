@@ -5,8 +5,7 @@
 #include <fw/FrameData.h>
 #include <app/Game.h>
 #include <fnd/Window.h>
-
-#include <Superluminal/PerformanceAPI.h>
+#include <fnd/Profiler.h>
 
 
 namespace engine
@@ -23,7 +22,7 @@ Game::Game() {
 
 // Create some 
 void UpdateSubPosition(int i) {
-    PERFORMANCEAPI_INSTRUMENT("UpdateSubPosition");
+    PROFILE_SCOPE("UpdateSubPosition");
 
     engine::RandomWorkload(i * 50);
 }
