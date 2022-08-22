@@ -135,6 +135,7 @@
     <ClCompile Include="src/foundation/src/private/WindowManager.cpp" />
     <ClCompile Include="src\foundation\src\private\JobSemaphore.cpp" />
     <ClCompile Include="src\foundation\src\private\main.cpp" />
+    <ClCompile Include="src\foundation\src\private\TracyIntegration.cpp" />
     <ClCompile Include="src\foundation\src\private\Util.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

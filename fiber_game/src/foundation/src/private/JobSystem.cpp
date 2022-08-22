@@ -12,6 +12,7 @@
 #include <vector>
 #include <iostream>
 #include <deque>
+#include <format>
 
 namespace engine
 {
@@ -21,6 +22,7 @@ class JobWorker;
 
 namespace {
     thread_local void* g_threadFiber = nullptr;
+    thread_local const char* g_threadFiberName = nullptr;
     thread_local JobWorker* g_threadWorker = nullptr;
     thread_local JobQueue* g_jobQueue = nullptr;
 }
@@ -45,10 +47,11 @@ public:
     FiberJob& operator=(FiberJob&& other) = delete;
     FiberJob(FiberJob&& other) = delete;
 
-    FiberJob()
+    FiberJob(const char* name)
     {
         AssertValid();
         m_fiber = ::CreateFiber(64 * 1024, FiberJob::FiberFunc, this);
+        m_fiber_name = name;
         ASSERT_MSG(m_fiber != nullptr, "Fiber creation has failed");
     }
 
@@ -82,18 +85,18 @@ public:
         ASSERT_MSG(value > 0, "handle issue when decrement");
     }
     static void FiberFunc(void* data) {
-        PROFILE_REGISTER_FIBER(GetCurrentFiber());
         FiberJob* fiberJob = reinterpret_cast<FiberJob*>(data);
+        PROFILE_REGISTER_FIBER(GetCurrentFiber(), fiberJob->GetFiberName());
 
         while(true)
         {
             fiberJob->Invoke();
 
-            SWITCH_TO_FIBER(g_threadFiber);
+            SWITCH_TO_FIBER(g_threadFiber, g_threadFiberName);
         }
 
-        PROFILE_UNREGISTER_FIBER(GetCurrentFiber());
-        SWITCH_TO_FIBER(g_threadFiber);
+        PROFILE_UNREGISTER_FIBER(GetCurrentFiber(), fiberJob->GetFiberName());
+        SWITCH_TO_FIBER(g_threadFiber, g_threadFiberName);
     }
 
     void SetWaitingHandle(JobCounter& handle, int64_t value, int64_t reset, const std::source_location location) {
@@ -104,6 +107,7 @@ public:
     }
 
     void* GetFiberHandle() { return m_fiber; }
+    const char* GetFiberName() { return m_fiber_name.c_str(); }
     void AssertValid() {
         ASSERT_MSG(m_job.m_handle == nullptr || m_job.m_handle->m_test == 0xdeadbeef, "invalid handle");
     }
@@ -122,6 +126,7 @@ public:
 
 protected:
     JobDesc m_job;
+    std::string m_fiber_name;
     void* m_fiber = nullptr;
     JobCounter* m_waitingHandle = nullptr;
     int64_t m_waitedValue = -1;
@@ -167,8 +172,9 @@ public:
         {
             std::scoped_lock<SpinLock> lock(m_freeFiberLock);
 
+            m_fiberIndex += 1;
             if (m_freeFiber.size() == 0) {
-                m_freeFiber.push_back(std::make_unique<FiberJob>());
+                m_freeFiber.push_back(std::make_unique<FiberJob>(std::format("Fiber {}", m_fiberIndex).c_str()));
             }
             
             {
@@ -256,6 +262,7 @@ private:
     std::deque<JobDesc> m_jobs;
     std::vector<FiberJob> m_job;
     std::atomic<int64_t> m_jobTotalNumber = 0;
+    int m_fiberIndex = -1;
 };
 
 
@@ -286,10 +293,13 @@ public:
     }
 private:
     void ThreadFunc() {
-        PROFILE_SET_THREADNAME(std::format("JobWorker - {}", m_index).c_str());
+        std::string thread_name = std::format("JobWorker {}", m_index);
+        std::string fiber_name = std::format("FiberWorker {}", m_index);
+        PROFILE_SET_THREADNAME(thread_name.c_str());
 
         g_threadFiber = ::ConvertThreadToFiber(nullptr);
-        PROFILE_REGISTER_FIBER(GetCurrentFiber());
+        g_threadFiberName = fiber_name.c_str();
+         (GetCurrentFiber());
         g_threadWorker = this;
         g_jobQueue = &m_jobQueue;
 
@@ -301,7 +311,7 @@ private:
                 if (job) {
                     job->AssertValid();
                     m_currentFiber = job.get();
-                    SWITCH_TO_FIBER(job->GetFiberHandle());
+                    SWITCH_TO_FIBER(job->GetFiberHandle(), job->GetFiberHandle());
                     m_currentFiber = nullptr;
                     if (!job->IsDone()) {
                         m_jobQueue.Push(std::move(job));
@@ -315,12 +325,13 @@ private:
                 }
             }
         }
-        PROFILE_UNREGISTER_FIBER(GetCurrentFiber());
+        PROFILE_UNREGISTER_FIBER(GetCurrentFiber(), fiber_name.c_str());
         ::ConvertFiberToThread();
     }
 
     FiberJob* m_currentFiber = nullptr;
     JobQueue& m_jobQueue;
+    int m_fiberIndex = -1;
     int m_index;
     std::thread m_thread;
 };
@@ -328,7 +339,7 @@ private:
 void Job::YieldJob() 
 {
     ASSERT_MSG(g_threadFiber != nullptr, "Yield can only be called from a job");
-    SWITCH_TO_FIBER(g_threadFiber);
+    SWITCH_TO_FIBER(g_threadFiber, g_threadFiberName);
 }
 
 void Job::Wait(JobCounter& handle, const std::source_location location) {
