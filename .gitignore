@@ -4,6 +4,4 @@ fiber_game/x64/
 fiber_game/bin/
 fiber_game/imgui.ini
 .vs/
-bin/
-obj/
 .vscode/
