@@ -75,7 +75,7 @@ public:
         }
         {
             const char* name = m_job.m_name;
-            PROFILE_SCOPE_COLOR(name, 254, 254, 254);
+            PROFILE_JOB_NAME(name);
             m_job.m_delegate();
         }
         JobCounter* handle = m_job.m_handle;
@@ -314,7 +314,10 @@ private:
                 if (job) {
                     job->AssertValid();
                     m_currentFiber = job.get();
-                    SWITCH_TO_FIBER(job->GetFiberHandle(), job->GetFiberName());
+                    {
+                        PROFILE_SCOPE_COLOR("Run Job", 20, 150, 20);
+                        SWITCH_TO_FIBER(job->GetFiberHandle(), job->GetFiberName());
+                    }
                     m_currentFiber = nullptr;
                     if (!job->IsDone()) {
                         m_jobQueue.Push(std::move(job));
@@ -369,7 +372,7 @@ void JobSystem::Start(std::function<void()> mainJob) {
     JobQueue jobQueue;
     JobCounter handle;
     
-    jobQueue.Dispatch("Main Job", handle, mainJob);
+    jobQueue.Dispatch("Starting Job", handle, mainJob);
 
     constexpr int N = 3;
     std::vector<std::unique_ptr<JobWorker>> workers;

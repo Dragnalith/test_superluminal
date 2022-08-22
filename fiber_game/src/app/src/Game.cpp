@@ -84,7 +84,7 @@ void Game::Update(engine::FrameData& frameData)
     frameData.fullscreen = m_fullscreen;
     frameData.vsync = m_vsync;
 
-    engine::RandomWorkload(10000); // random workload of 5ms to be visible on profiler
+    engine::RandomWorkload(5000); // random workload of 5ms to be visible on profiler
 }
 
 }
