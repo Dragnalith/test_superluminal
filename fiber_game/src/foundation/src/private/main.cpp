@@ -41,7 +41,7 @@ int main() {
         std::cout << "Hello World\n";
         engine::JobCounter handle;
         for (int i = 0; i < 10; i++) {
-            engine::Job::DispatchJob(handle, [i] {
+            engine::Job::Dispatch("Some Job", handle, [i] {
                 std::cout << "Some Job: " << i << "\n";
                 });
         }
@@ -49,7 +49,7 @@ int main() {
         std::cout << "Good Night World\n";
         engine::JobCounter counter1;
         engine::JobCounter counter2;
-        engine::Job::DispatchJob(handle, [&counter1, &counter2] {
+        engine::Job::Dispatch("Some Job1", handle, [&counter1, &counter2] {
             std::cout << "Some Job1: 1\n";
             counter1.Set(1);
             engine::Job::Wait(counter2, 1);
@@ -62,7 +62,7 @@ int main() {
             std::cout << "Some Job1: 4\n";
             counter1.Set(4);
         });            
-        engine::Job::DispatchJob(handle, [&counter2, &counter1] {
+        engine::Job::Dispatch("Some Job2", handle, [&counter2, &counter1] {
             engine::Job::Wait(counter1, 1);
             std::cout << "Some Job2: 1\n";
             counter2.Set(1);
