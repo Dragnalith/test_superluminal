@@ -44,6 +44,7 @@ public:
 
     void SetJob(const char* name, JobCounter* handle, const std::function<void()>& func)
     {
+        ASSERT_MSG(IsDone(), "Job is not done");
         m_name = name;
         m_handle = handle;
         m_delegate = func;
@@ -59,29 +60,45 @@ public:
             ::DeleteFiber(m_fiber);
         }
     }
+
+    void Invoke() {
+        m_useCount += 1;
+        if (m_useCount > 1) {
+            //__debugbreak();
+        }
+        {
+            const char* name = m_name;
+            PERFORMANCEAPI_INSTRUMENT_COLOR(name, PERFORMANCEAPI_MAKE_COLOR(254, 254, 254));
+            m_delegate();
+        }
+        JobCounter* handle = m_handle;
+        m_name = nullptr;
+        m_handle = nullptr;
+        m_delegate = nullptr;
+        ASSERT_MSG(handle != nullptr, "Handle is null");
+        int64_t value = handle->m_counter.fetch_sub(1);
+        ASSERT_MSG(value > 0, "handle issue when decrement");
+    }
     static void FiberFunc(void* data) {
         PerformanceAPI_RegisterFiber((uint64_t)GetCurrentFiber());
         FiberJob* fiberJob = reinterpret_cast<FiberJob*>(data);
+
+        while(true)
         {
-            const char* name = fiberJob->m_name;
-            PERFORMANCEAPI_INSTRUMENT_COLOR(name, PERFORMANCEAPI_MAKE_COLOR(254, 254, 254));
-            fiberJob->m_delegate();
+            fiberJob->Invoke();
+
+            SWITCH_TO_FIBER(g_threadFiber);
         }
-        JobCounter* handle = fiberJob->m_handle;
-        fiberJob->m_name = nullptr;
-        fiberJob->m_handle = nullptr;
-        fiberJob->m_delegate = nullptr;
-        int64_t value = handle->m_counter.fetch_sub(1);
-        ASSERT_MSG(value > 0, "handle issue when decrement");
 
         PerformanceAPI_UnregisterFiber((uint64_t)GetCurrentFiber());
         SWITCH_TO_FIBER(g_threadFiber);
     }
 
-    void SetWaitingHandle(JobCounter& handle, int64_t value, int64_t reset) {
+    void SetWaitingHandle(JobCounter& handle, int64_t value, int64_t reset, const std::source_location location) {
         m_waitingHandle = &handle;
         m_waitedValue = value;
         m_resetValue = reset;
+        m_location = location;
     }
 
     void* GetFiberHandle() { return m_fiber; }
@@ -109,6 +126,8 @@ protected:
     JobCounter* m_waitingHandle = nullptr;
     int64_t m_waitedValue = -1;
     int64_t m_resetValue = -1;
+    std::source_location m_location;
+    int64_t m_useCount = 0;
 };
 
 
@@ -134,14 +153,34 @@ public:
     }
 
     void Create(const char* name, JobCounter& handle, std::function<void()> mainJob) {
+        std::unique_ptr<FiberJob> job;
         int64_t value = m_jobTotalNumber.fetch_add(1);
         ASSERT_MSG(value >= 0, "job count issue when increment");
-        std::unique_ptr<FiberJob> job = std::make_unique<FiberJob>();
+        {
+            std::scoped_lock<SpinLock> lock(m_stackLock);
+
+            if (m_freeFiber.size() == 0) {
+                m_freeFiber.push_back(std::make_unique<FiberJob>());
+            }
+            
+            {
+                size_t beforeSize = m_freeFiber.size();
+                job = std::move(m_freeFiber.front());
+                m_freeFiber.pop_front();
+                size_t afterSize = m_freeFiber.size();
+                ASSERT_MSG(beforeSize == afterSize + 1, "Problem of free fiber pop");
+            }
+        }
         job->SetJob(name, &handle, mainJob);
         Push(std::move(job));
     }
 
     void Release(std::unique_ptr<FiberJob>&& job) {
+        {
+            std::scoped_lock<SpinLock> lock(m_stackLock);
+            m_freeFiber.push_back(std::move(job));
+        }
+
         int64_t value = m_jobTotalNumber.fetch_sub(1);
         ASSERT_MSG(value > 0, "job count issue when decrement");
     }
@@ -164,6 +203,10 @@ public:
                     auto job = std::move(*it);
                     m_queue.erase(it);
                     job->AssertValid();
+                    job->m_waitedValue = -1;
+                    job->m_resetValue = -1;
+                    job->m_waitingHandle = nullptr;
+                    job->m_location = std::source_location();
                     return std::move(job);
                 }
             }
@@ -181,6 +224,7 @@ public:
 
 private:
     std::deque<std::unique_ptr<FiberJob>> m_queue;
+    std::deque<std::unique_ptr<FiberJob>> m_freeFiber;
     std::vector<FiberJob> m_job;
     mutable SpinLock m_stackLock;
     std::atomic<int64_t> m_jobTotalNumber = 0;
@@ -207,9 +251,9 @@ public:
         m_thread.join();
     }
 
-    void SetWaitingHandle(JobCounter& handle, int64_t value, int64_t reset) {
+    void SetWaitingHandle(JobCounter& handle, int64_t value, int64_t reset, const std::source_location location) {
         ASSERT_MSG(m_currentFiber != nullptr, "Wait can only be called from a Job");
-        m_currentFiber->SetWaitingHandle(handle, value, reset);
+        m_currentFiber->SetWaitingHandle(handle, value, reset, location);
 
     }
 private:
@@ -257,17 +301,17 @@ void Job::YieldJob()
     SWITCH_TO_FIBER(g_threadFiber);
 }
 
-void Job::Wait(JobCounter& handle) {
-    Job::Wait(handle, 0, 0);
+void Job::Wait(JobCounter& handle, const std::source_location location) {
+    Job::Wait(handle, 0, 0, location);
 }
 
-void Job::Wait(JobCounter& handle, int64_t value) {
-    Job::Wait(handle, value, value);
+void Job::Wait(JobCounter& handle, int64_t value, const std::source_location location) {
+    Job::Wait(handle, value, value, location);
 }
 
-void Job::Wait(JobCounter& handle, int64_t value, int64_t reset) {
+void Job::Wait(JobCounter& handle, int64_t value, int64_t reset, const std::source_location location) {
     ASSERT_MSG(g_threadWorker != nullptr, "Wait can only be called from a worker");
-    g_threadWorker->SetWaitingHandle(handle, value, reset);
+    g_threadWorker->SetWaitingHandle(handle, value, reset, location);
     YieldJob();
 }
 

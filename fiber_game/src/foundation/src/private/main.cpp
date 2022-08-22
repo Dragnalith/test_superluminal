@@ -38,6 +38,29 @@ int main() {
 
 #if 0
     engine::JobSystem::Start([]() {
+        std::cout << "Start\n";
+        engine::JobCounter handle;
+        for (int i = 0; i < 10; i++) {
+            engine::Job::Dispatch("Some Job", handle, [] {
+                std::cout << "Job1\n";
+            });
+        }
+        engine::Job::Wait(handle);
+        for (int i = 0; i < 10; i++) {
+            engine::Job::Dispatch("Some Job", handle, [] {
+                std::cout << "Job2\n";
+                });
+        }
+        engine::Job::Wait(handle);
+        for (int i = 0; i < 10; i++) {
+            engine::Job::Dispatch("Some Job", handle, [] {
+                std::cout << "Job3\n";
+                });
+        }
+        engine::Job::Wait(handle);
+    });
+    return 0;
+    engine::JobSystem::Start([]() {
         std::cout << "Hello World\n";
         engine::JobCounter handle;
         for (int i = 0; i < 10; i++) {
