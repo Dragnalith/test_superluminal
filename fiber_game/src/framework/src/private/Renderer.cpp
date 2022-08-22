@@ -183,10 +183,13 @@ void Renderer::Kick(const FrameData& frameData)
 {
     m_impl->renderDevice.GetCommandQueue()->ExecuteCommandLists(1, (ID3D12CommandList* const*)&frameData.renderContext->commandList);
     m_impl->swapChain.Present(frameData.vsync ? 1 : 0);
+    PROFILE_FRAME("CPU Present");
+
     m_impl->lastPresentedFrameIndex = frameData.frameIndex;
     m_impl->renderDevice.GetCommandQueue()->Signal(m_impl->gpuCompletionfence, m_impl->lastPresentedFrameIndex);
     m_impl->Free(frameData.renderContext);
     m_impl->WaitForPresent();
+    PROFILE_FRAME("GPU Present");
     m_impl->renderStarted.Sub(1);
 
 }

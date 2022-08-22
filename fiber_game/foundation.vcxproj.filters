@@ -35,6 +35,9 @@
     <ClInclude Include="src\foundation\include\fnd\JobSemaphore.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="src\foundation\include\fnd\Profiler.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src/foundation/src/private/JobSystem.cpp">

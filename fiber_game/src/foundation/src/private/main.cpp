@@ -6,7 +6,7 @@
 
 #include <private/WindowManager.h>
 
-#include <Superluminal/PerformanceAPI.h>
+#include <fnd/Profiler.h>
 #include <windows.h>
 #include <iostream>
 
@@ -34,7 +34,7 @@ void Window::SetCursor(void* cursor)
 
 int main() {
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-    PerformanceAPI_SetCurrentThreadName("Main Thread");
+    PROFILE_SET_THREADNAME("Main Thread");
 
 #if 0
     engine::JobSystem::Start([]() {

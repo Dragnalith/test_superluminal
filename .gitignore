@@ -5,3 +5,5 @@ fiber_game/bin/
 fiber_game/imgui.ini
 .vs/
 .vscode/
+*/bin/
+*/obj/

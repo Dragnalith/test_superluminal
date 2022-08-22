@@ -52,6 +52,7 @@ void FrameManager::RunFrame(int maxFrameLatency) {
 
     m_startSemaphore.Acquire();
 
+    PROFILE_DEFAULT_FRAME
     auto now = Clock::now();
     float deltatime = std::chrono::duration<float>(now - m_lastStartFrameTime).count();
     m_lastStartFrameTime = now;

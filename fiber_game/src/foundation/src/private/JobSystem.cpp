@@ -172,8 +172,8 @@ public:
         {
             std::scoped_lock<SpinLock> lock(m_freeFiberLock);
 
-            m_fiberIndex += 1;
             if (m_freeFiber.size() == 0) {
+                m_fiberIndex += 1;
                 m_freeFiber.push_back(std::make_unique<FiberJob>(std::format("Fiber {}", m_fiberIndex).c_str()));
             }
             
@@ -293,25 +293,28 @@ public:
     }
 private:
     void ThreadFunc() {
+        PROFILE_SCOPE("ThreadFunc");
+
         std::string thread_name = std::format("JobWorker {}", m_index);
         std::string fiber_name = std::format("FiberWorker {}", m_index);
         PROFILE_SET_THREADNAME(thread_name.c_str());
 
         g_threadFiber = ::ConvertThreadToFiber(nullptr);
         g_threadFiberName = fiber_name.c_str();
-         (GetCurrentFiber());
+        PROFILE_REGISTER_FIBER(g_threadFiber, g_threadFiberName);
         g_threadWorker = this;
         g_jobQueue = &m_jobQueue;
 
         {
-            PROFILE_SCOPE_COLOR("Idle", 163, 73, 164);
 
             while (m_jobQueue.RemainingJobCount() > 0) {
+                PROFILE_SCOPE_COLOR("Idle", 163, 73, 164);
+
                 std::unique_ptr<FiberJob> job = m_jobQueue.Pop();
                 if (job) {
                     job->AssertValid();
                     m_currentFiber = job.get();
-                    SWITCH_TO_FIBER(job->GetFiberHandle(), job->GetFiberHandle());
+                    SWITCH_TO_FIBER(job->GetFiberHandle(), job->GetFiberName());
                     m_currentFiber = nullptr;
                     if (!job->IsDone()) {
                         m_jobQueue.Push(std::move(job));
