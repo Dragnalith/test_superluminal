@@ -11,7 +11,11 @@ namespace engine
 
 using Clock = std::chrono::high_resolution_clock;
 
+#if 1
 #define ASSERT_MSG(condition, msg) assert(msg && condition)
+#else
+#define ASSERT_MSG(condition, msg) void()
+#endif
 
 template <typename T>
 class Pimpl

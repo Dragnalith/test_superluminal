@@ -261,7 +261,7 @@ void JobSystem::Start(std::function<void()> mainJob) {
     JobCounter handle;
     jobQueue.Create("Main Job", handle, mainJob);
 
-    constexpr int N = 4;
+    constexpr int N = 3;
     std::vector<std::unique_ptr<JobWorker>> workers;
     for (int i = 0; i < N; i++) {
         workers.push_back(std::make_unique<JobWorker>(jobQueue, i));
