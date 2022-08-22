@@ -59,10 +59,6 @@ public:
         ASSERT_MSG(IsDone(), "Job is not done");
         m_job = job;
         AssertValid();
-        {
-            int64_t value = m_job.m_handle->m_counter.fetch_add(1);
-            ASSERT_MSG(value >= 0, "handle issue when increment");
-        }
     }
     ~FiberJob() {
         if (m_fiber != nullptr) {
@@ -169,8 +165,6 @@ public:
     }
     void Create(const JobDesc& jobDesc) {
         std::unique_ptr<FiberJob> job;
-        int64_t value = m_jobTotalNumber.fetch_add(1);
-        ASSERT_MSG(value >= 0, "job count issue when increment");
         {
             std::scoped_lock<SpinLock> lock(m_freeFiberLock);
 
@@ -238,8 +232,21 @@ public:
     }
 
     void EnqueueJob(const JobDesc& jobDesc) {
+        {
+            int64_t value = m_jobTotalNumber.fetch_add(1);
+            ASSERT_MSG(value >= 0, "job count issue when increment");
+        }
+        {
+            int64_t value = jobDesc.m_handle->m_counter.fetch_add(1);
+            ASSERT_MSG(value >= 0, "handle issue when increment");
+        }
         std::scoped_lock<SpinLock> lock(m_jobLock);
         m_jobs.push_back(jobDesc);
+    }
+
+    void Dispatch(const char* name, JobCounter& handle, std::function<void()> func) {
+        EnqueueJob(JobDesc(name, &handle, func));
+        ScheduleFiber();
     }
 
 private:
@@ -340,15 +347,14 @@ void Job::Wait(JobCounter& handle, int64_t value, int64_t reset, const std::sour
 
 void Job::Dispatch(const char* name, JobCounter& handle, std::function<void()> func) {
     ASSERT_MSG(g_jobQueue != nullptr, "DispatchJob can only be called from a worker");
-
-    g_jobQueue->EnqueueJob(JobDesc(name, &handle, func));
-    g_jobQueue->ScheduleFiber();
+    g_jobQueue->Dispatch(name, handle, func);
 }
 
 void JobSystem::Start(std::function<void()> mainJob) {
     JobQueue jobQueue;
     JobCounter handle;
-    jobQueue.Create(JobDesc("Main Job", &handle, mainJob));
+    
+    jobQueue.Dispatch("Main Job", handle, mainJob);
 
     constexpr int N = 3;
     std::vector<std::unique_ptr<JobWorker>> workers;
