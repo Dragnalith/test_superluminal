@@ -151,7 +151,10 @@ void RenderMultipleObject(int N) {
 }
 
 void Renderer::Render(FrameData& frameData) {
-    RandomWorkload(5000); // random workload of 5ms to be visible on profiler
+    {
+        PROFILE_SCOPE("Renderer Workload");
+        RandomWorkload(frameData.rendererWorkloadUs); // random workload of 5ms to be visible on profiler
+    }
 
     if (m_impl->swapChain.NeedResize(frameData.width, frameData.height, frameData.fullscreen))
     {
@@ -189,13 +192,16 @@ void Renderer::Render(FrameData& frameData) {
     renderCtx->commandList->ResourceBarrier(1, &barrier);
     renderCtx->commandList->Close();
 
-    engine::JobCounter handle;
-    for (int i = 0; i < 15; i++) {
-        engine::Job::Dispatch("RenderObject Job", handle, [i] {
-            RenderMultipleObject(i % 3);
-        });
+    {
+        PROFILE_SCOPE("Renderer Jobs");
+        engine::JobCounter handle;
+        for (int i = 0; i < frameData.rendererjobNumber; i++) {
+            engine::Job::Dispatch("RenderObject Job", handle, [i] {
+                RenderMultipleObject(i % 3);
+            });
+        }
+        engine::Job::Wait(handle);
     }
-    engine::Job::Wait(handle);
 
 }
 

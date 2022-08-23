@@ -32,9 +32,35 @@ void Window::SetCursor(void* cursor)
 
 }
 
-int main() {
+bool g_profilerEnabled = true;
+
+namespace fnd
+{
+
+    bool IsProfilingEnabled() {
+#if defined(SUPERLUMINAL_PROFILER_ENABLED)
+        return true;
+#elif defined(TRACY_PROFILER_ENABLED)
+        return g_profilerEnabled;
+#else
+        return false;
+#endif
+    }
+}
+
+int main(int argc, char** argv) {
+#if defined(TRACY_PROFILER_ENABLED)
+    if (argc > 1) {
+        std::string arg(argv[1]);
+        g_profilerEnabled = !(arg == "--no-profiler");
+    }
+    if (g_profilerEnabled) {
+        std::cout << "Start Tracy Profiler\n";
+        tracy::StartupProfiler();
+    }
+#endif
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-    PROFILE_SET_THREADNAME("Main Thread");
+    PROFILE_SET_THREADNAME("The Main Thread");
 
 #if 0
     engine::JobSystem::Start([]() {
@@ -109,5 +135,12 @@ int main() {
     engine::JobSystem::Start([]{
         AppMain();
     });
+
+#if defined(TRACY_PROFILER_ENABLED)
+    if (g_profilerEnabled) {
+        tracy::ShutdownProfiler();
+        std::cout << "Stop Tracy Profiler\n";
+    }
+#endif
     return 0;
 }

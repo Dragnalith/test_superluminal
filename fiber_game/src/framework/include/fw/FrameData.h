@@ -51,6 +51,10 @@ struct FrameData
 {
     int64_t frameIndex = 0;
     int maxFrameLatency = 3;
+    int rendererWorkloadUs = 1000;
+    int rendererjobNumber = 10;
+    int gameWorkloadUs = 1000;
+    int gamejobNumber = 10;
     float deltatime = 0.0166f;
     bool fullscreen = false;
     bool vsync = true;

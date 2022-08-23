@@ -34,13 +34,17 @@ void UpdatePosition(int i) {
 
 void Game::Update(engine::FrameData& frameData) 
 {
-    engine::JobCounter handle;
-    for (int i = 0; i < 10; i++) {
-        engine::Job::Dispatch("UpdatePosition Job", handle, [i] {
-            UpdatePosition(i);
-        });
+    {
+        PROFILE_SCOPE("Game Jobs");
+
+        engine::JobCounter handle;
+        for (int i = 0; i < frameData.gamejobNumber; i++) {
+            engine::Job::Dispatch("UpdatePosition Job", handle, [i] {
+                UpdatePosition(i);
+            });
+        }
+        engine::Job::Wait(handle);
     }
-    engine::Job::Wait(handle);
     frameData.result.stop = m_lastQuitTime != engine::Window::GetMainWindow().GetLastQuitTime();
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
     if (m_show_demo_window)
@@ -84,7 +88,10 @@ void Game::Update(engine::FrameData& frameData)
     frameData.fullscreen = m_fullscreen;
     frameData.vsync = m_vsync;
 
-    engine::RandomWorkload(5000); // random workload of 5ms to be visible on profiler
+    {
+        PROFILE_SCOPE("Game Workload");
+        engine::RandomWorkload(frameData.gameWorkloadUs); // random workload of 5ms to be visible on profiler
+    }
 }
 
 }

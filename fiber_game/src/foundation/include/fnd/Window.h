@@ -1,6 +1,7 @@
 #pragma once
 
-#include <windows.h>
+#define _AMD64_
+#include <windef.h>
 #include <stdint.h>
 #include <mutex>
 #include <vector>
