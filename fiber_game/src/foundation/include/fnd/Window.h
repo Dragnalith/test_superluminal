@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef _AMD64_
 #define _AMD64_
+#endif
 #include <windef.h>
 #include <stdint.h>
 #include <mutex>

@@ -3,7 +3,9 @@
 namespace fnd
 {
 	bool IsProfilingEnabled();
+	void SetThreadName(const char* name);
 }
+
 #if defined(SUPERLUMINAL_PROFILER_ENABLED)
 
 #include <Superluminal/PerformanceAPI.h>
@@ -44,6 +46,24 @@ namespace fnd
 #define PROFILE_REGISTER_FIBER(Fiber, Name) if (fnd::IsProfilingEnabled()) { TracyFiberEnter(Name); } do {} while(0)
 #define PROFILE_UNREGISTER_FIBER(Fiber, Name) if (fnd::IsProfilingEnabled()) { TracyFiberLeave; } do {} while(0);
 #define SWITCH_TO_FIBER(Fiber, Name) if (fnd::IsProfilingEnabled()) { TracyFiberEnter(Name); } ::SwitchToFiber((Fiber));
+
+#elif defined(PIX_PROFILER_ENABLED)
+
+#include <windows.h>
+#include <WinPixEventRuntime/pix3.h>
+
+#define PROFILE_SET_THREADNAME(name) fnd::SetThreadName(name)
+#define PROFILE_SCOPE(name) PIXScopedEvent(PIX_COLOR(200, 200, 200), name)
+#define PROFILE_SCOPE_COLOR(name, r, g, b) PIXScopedEvent(PIX_COLOR(r, g, b), name)
+#define PROFILE_SCOPE_DATA_COLOR(name, data, r, g, b) PIXScopedEvent(PIX_COLOR(r, g, b), name)
+#define PROFILE_JOB_NAME(name) PIXScopedEvent(PIX_COLOR(200, 200, 200), name)
+
+#define PROFILE_DEFAULT_FRAME
+#define PROFILE_FRAME(name)
+
+#define PROFILE_REGISTER_FIBER(Fiber, Name)
+#define PROFILE_UNREGISTER_FIBER(Fiber, Name)
+#define SWITCH_TO_FIBER(Fiber, Name) ::SwitchToFiber((Fiber));
 
 #else
 

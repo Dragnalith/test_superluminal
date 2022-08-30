@@ -37,6 +37,13 @@ bool g_profilerEnabled = true;
 namespace fnd
 {
 
+void SetThreadName(const char* name) {
+wchar_t thread_name[64];
+size_t result;
+mbstowcs_s(&result, thread_name, std::size(thread_name), name, std::size(thread_name) - 1);
+::SetThreadDescription(::GetCurrentThread(), thread_name);
+}
+
     bool IsProfilingEnabled() {
 #if defined(SUPERLUMINAL_PROFILER_ENABLED)
         return true;
