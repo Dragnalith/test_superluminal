@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <mutex>
+#include <format>
 
 namespace engine
 {
@@ -20,7 +21,7 @@ FrameManager::FrameManager(IFramePipeline& pipeline)
 
 void FrameManager::Start()
 {
-    StartFrame(FrameUpdateResult::DefaultMaxFrameLatency);
+    StartFrame(FrameUpdateResult());
     Job::Wait(m_handle);
 }
 
@@ -43,8 +44,8 @@ int64_t FrameManager::AllocateFrameIndex() {
     m_nextFrameIndex += 1;
     return frameIndex;
 }
-void FrameManager::RunFrame(int maxFrameLatency) {
-    SetFrameLatency(maxFrameLatency);
+void FrameManager::RunFrame(FrameUpdateResult prevResult) {
+    SetFrameLatency(prevResult.maxFrameLatency);
 
     int64_t frameIndex = AllocateFrameIndex();
     
@@ -52,7 +53,6 @@ void FrameManager::RunFrame(int maxFrameLatency) {
 
     m_startSemaphore.Acquire();
 
-    PROFILE_DEFAULT_FRAME;
     auto now = Clock::now();
     float deltatime = std::chrono::duration<float>(now - m_lastStartFrameTime).count();
     m_lastStartFrameTime = now;
@@ -60,7 +60,9 @@ void FrameManager::RunFrame(int maxFrameLatency) {
     FrameData frameData;
     frameData.frameIndex = frameIndex;
     frameData.deltatime = deltatime;
-    frameData.maxFrameLatency = maxFrameLatency;
+    frameData.maxFrameLatency = prevResult.maxFrameLatency;
+    frameData.renderStageUs = prevResult.renderStageUs;
+    frameData.gameStageUs = prevResult.gameStageUs;
 
     PROFILE_SCOPE_DATA_COLOR("Frame", frameName.c_str(), 34, 30, 203);
     {
@@ -68,7 +70,7 @@ void FrameManager::RunFrame(int maxFrameLatency) {
 
         m_pipeline.Update(frameData);
         if (!frameData.result.stop) {
-            StartFrame(frameData.result.maxFrameLatency);
+            StartFrame(frameData.result);
         }
     }
 
@@ -83,6 +85,7 @@ void FrameManager::RunFrame(int maxFrameLatency) {
         Job::Wait(m_kickSemaphore, frameData.frameIndex);
         PROFILE_SCOPE_DATA_COLOR("Kick", frameName.c_str(), 238, 0, 60);
         m_pipeline.Kick(frameData);
+        PROFILE_DEFAULT_FRAME; // Present on screen
         m_kickSemaphore.Set(frameData.frameIndex + 1);
     }
 
@@ -92,9 +95,9 @@ void FrameManager::RunFrame(int maxFrameLatency) {
     }
     m_startSemaphore.Release();
 }
-void FrameManager::StartFrame(int frameLatency) {
-    Job::Dispatch("Frame Job", m_handle, [this, frameLatency] {
-        RunFrame(frameLatency);
+void FrameManager::StartFrame(FrameUpdateResult result) {
+    Job::Dispatch("Frame Job", m_handle, [this, result] {
+        RunFrame(result);
     });
 }
 

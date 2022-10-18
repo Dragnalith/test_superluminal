@@ -151,10 +151,8 @@ void RenderMultipleObject(int N) {
 }
 
 void Renderer::Render(FrameData& frameData) {
-    {
-        PROFILE_SCOPE("Renderer Workload");
-        RandomWorkload(frameData.rendererWorkloadUs); // random workload of 5ms to be visible on profiler
-    }
+
+    engine::Time startTime = engine::Clock::now();
 
     if (m_impl->swapChain.NeedResize(frameData.width, frameData.height, frameData.fullscreen))
     {
@@ -201,6 +199,12 @@ void Renderer::Render(FrameData& frameData) {
             });
         }
         engine::Job::Wait(handle);
+    }
+
+    {
+        engine::Time beforeWorkloadTime = engine::Clock::now();
+        PROFILE_SCOPE("Renderer Workload");
+        RandomWorkload(frameData.renderStageUs - engine::to_us(beforeWorkloadTime - startTime)); // random workload of 5ms to be visible on profiler
     }
 
 }

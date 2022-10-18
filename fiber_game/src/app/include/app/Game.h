@@ -24,6 +24,7 @@ private:
     bool m_vsync = true;
     bool m_show_demo_window = true;
     bool m_show_another_window = false;
+    int m_selectedStrategy = 0;
     float m_f = 0.0f;
     int m_counter = 0;
     ImVec4 m_clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);

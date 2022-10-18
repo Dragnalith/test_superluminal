@@ -16,6 +16,15 @@ struct FrameData;
 namespace app
 {
 
+namespace {
+const char* g_frame_strategy[4]{
+    "3 Frame Latency",
+    "2 Frame Latency (CPU bound)",
+    "2 Frame Latency (GPU bound)",
+    "1 Frame Latency"
+};
+}
+
 Game::Game() {
     m_lastQuitTime = engine::Window::GetMainWindow().GetLastQuitTime();
 }
@@ -34,6 +43,8 @@ void UpdatePosition(int i) {
 
 void Game::Update(engine::FrameData& frameData) 
 {
+    engine::Time startTime = engine::Clock::now();
+
     {
         PROFILE_SCOPE("Game Jobs");
 
@@ -73,6 +84,42 @@ void Game::Update(engine::FrameData& frameData)
         ImGui::SliderInt("MaxFrameLatency", &maxFrameLatency, 1, 3);
         frameData.result.maxFrameLatency = maxFrameLatency;
 
+        int gameStageUs = frameData.gameStageUs;
+        ImGui::SliderInt("Game Stade (us)", &gameStageUs, 1, 35000);
+        frameData.result.gameStageUs = gameStageUs;
+
+        int renderStageUs = frameData.renderStageUs;
+        ImGui::SliderInt("Render Stage (us)", &renderStageUs, 1, 35000);
+        frameData.result.renderStageUs = renderStageUs;
+
+        int selectedStrategy = m_selectedStrategy;
+        ImGui::Combo("Frame Strategy", &selectedStrategy, g_frame_strategy, IM_ARRAYSIZE(g_frame_strategy));
+        if (selectedStrategy != m_selectedStrategy) {
+            m_selectedStrategy = selectedStrategy;
+            switch (m_selectedStrategy) {
+            case 0: // 3 Frame Latency
+                frameData.result.maxFrameLatency = 3;
+                frameData.result.gameStageUs = engine::FrameUpdateResult::DefaultGameStageUs;
+                frameData.result.renderStageUs = engine::FrameUpdateResult::DefaultRenderStageUs;
+                break;
+            case 1: // 2 Frame Latency (CPU bound)
+                frameData.result.maxFrameLatency = 2;
+                frameData.result.gameStageUs = engine::FrameUpdateResult::DefaultGameStageUs;
+                frameData.result.renderStageUs = 8000;
+                break;
+            case 2: // 2 Frame Latency (GPU bound)
+                frameData.result.maxFrameLatency = 2;
+                frameData.result.gameStageUs = 8000;
+                frameData.result.renderStageUs = engine::FrameUpdateResult::DefaultRenderStageUs;
+                break;
+            case 3: // 1 Frame Latency
+                frameData.result.maxFrameLatency = 1;
+                frameData.result.gameStageUs = 4000;
+                frameData.result.renderStageUs = 4000;
+                break;
+            }
+        }
+
         ImGui::End();
     }
 
@@ -89,8 +136,9 @@ void Game::Update(engine::FrameData& frameData)
     frameData.vsync = m_vsync;
 
     {
+        engine::Time beforeWorkloadTime = engine::Clock::now();
         PROFILE_SCOPE("Game Workload");
-        engine::RandomWorkload(frameData.gameWorkloadUs); // random workload of 5ms to be visible on profiler
+        engine::RandomWorkload(frameData.gameStageUs - engine::to_us(beforeWorkloadTime - startTime)); // random workload of 5ms to be visible on profiler
     }
 }
 

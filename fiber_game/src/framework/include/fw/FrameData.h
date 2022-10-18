@@ -15,8 +15,12 @@ namespace engine
 struct FrameUpdateResult
 {
     static constexpr int DefaultMaxFrameLatency = 3;
+    static constexpr int DefaultRenderStageUs = 15000;
+    static constexpr int DefaultGameStageUs = 15500;
     bool stop = false; // Stop the FrameManager, i.e stop scheduling new frame, i.e stop the app
     int maxFrameLatency = DefaultMaxFrameLatency; // Number of frame which can be interleaved at the same time
+    int renderStageUs = DefaultRenderStageUs;
+    int gameStageUs = DefaultGameStageUs;
 };
 
 struct RenderContext
@@ -51,9 +55,9 @@ struct FrameData
 {
     int64_t frameIndex = 0;
     int maxFrameLatency = 3;
-    int rendererWorkloadUs = 1000;
+    int renderStageUs = FrameUpdateResult::DefaultRenderStageUs;
     int rendererjobNumber = 10;
-    int gameWorkloadUs = 1000;
+    int gameStageUs = FrameUpdateResult::DefaultGameStageUs;
     int gamejobNumber = 10;
     float deltatime = 0.0166f;
     bool fullscreen = false;

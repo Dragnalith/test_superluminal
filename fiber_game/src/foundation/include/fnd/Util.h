@@ -10,6 +10,13 @@ namespace engine
 {
 
 using Clock = std::chrono::high_resolution_clock;
+using Time = decltype(Clock::now());
+using Duration = decltype(Time() - Time());
+
+inline int to_us(Duration val) {
+    return (int) std::chrono::duration_cast<std::chrono::microseconds>(val).count();
+}
+
 
 #if 1
 #define ASSERT_MSG(condition, msg) assert(msg && condition)

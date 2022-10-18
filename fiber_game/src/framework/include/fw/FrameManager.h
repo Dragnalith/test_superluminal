@@ -12,6 +12,8 @@
 namespace engine
 {
 
+struct FrameUpdateResult;
+
 /* 
     Run a IFramePipeline and interveal the stages
 */
@@ -21,8 +23,8 @@ public:
     FrameManager(IFramePipeline& pipeline);
     void Start();
 private:
-    void RunFrame(int maxFrameLatency);
-    void StartFrame(int maxFrameLatency);
+    void RunFrame(FrameUpdateResult result);
+    void StartFrame(FrameUpdateResult result);
 
     void SetFrameLatency(int maxFrameLatency);
     int64_t AllocateFrameIndex();
